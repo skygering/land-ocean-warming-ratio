@@ -1,4 +1,6 @@
 #making a change so I can open a pull request
+#secondary change so that it updates the pull request
+
 
 #upload information
 cmip6_archive <- read.csv(file = '/pic/projects/GCAM/CMIP6/cmip6_archive_index.csv', stringsAsFactors = FALSE)
