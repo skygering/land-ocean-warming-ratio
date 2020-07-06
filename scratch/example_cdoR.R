@@ -1,7 +1,8 @@
 
-
+#upload information
 cmip6_archive <- read.csv(file = '/pic/projects/GCAM/CMIP6/cmip6_archive_index.csv', stringsAsFactors = FALSE)
 
+#old code -> get the data from the archive
 cmip6_archive %>%
     dplyr::filter(variable == 'tas' & domain == 'Amon') %>%
     dplyr::filter(experiment %in% c('1pctCO2', 'abrupt-4xCO2', 'historical', 'piControl')) %>%
