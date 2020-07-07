@@ -1,5 +1,3 @@
 .DS_Store
-areacella_fx_E3SM-1-0_1pctCO2_r1i1p1f1_gr.nc
-tas_Amon_E3SM-1-0_1pctCO2_r1i1p1f1_gr_000101-002512.nc
-sftlf_fx_E3SM-1-0_1pctCO2_r1i1p1f1_gr.nc
+*.nc
 
