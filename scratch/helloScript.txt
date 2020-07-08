@@ -1,0 +1,11 @@
+#!/bin/bash
+
+#SBATCH -A IHESD
+#SBATCH -t 10:00
+#SBATCH -N 1
+
+#SBATCH -n 1
+#SBATCH -J helloScript
+
+echo hello world
+

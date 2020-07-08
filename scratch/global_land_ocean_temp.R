@@ -50,8 +50,22 @@ ggplot(temp_frame, aes(x = Time, y = Temp, group = Data)) + geom_line(aes(linety
   
   #weighted_land <- system2('cdo.exe', args = c("mul", nc_area, nc_frac, LandArea_nc), stdout = TRUE, stderr = TRUE)
   
-  weighted_land <- system(paste(cdo_path, ' mul ', nc_area, " ", nc_land_frac, " ", LandArea_nc)) #output in nc_data folder from panoply
-  weighted_ocean <- system(paste(cdo_path, ' -mulc,-1', ' -addc,-1 ', nc_land_frac, " ", OceanFrac_nc))
+  system(paste(cdo_path, ' mul ', nc_area, " ", nc_land_frac, " ", LandArea_nc)) #output in nc_data folder from panoply
+  system(paste(cdo_path, ' -mulc,-1', ' -addc,-1 ', nc_land_frac, " ", OceanFrac_nc))
+  system(paste(cdo_path, ' mul ', nc_area, " ", OceanFrac_nc, " ", OceanArea_nc))
+  
+  GloablTemp_nc <- 'land-ocean-warming-ratio/scratch/nc_data/tas_Amon_E3SM-1-0_1pctCO2_r1i1p1f1_gr_000101-002512_GlobalTemp.nc'
+  OceanTemp_nc <- 'land-ocean-warming-ratio/scratch/nc_data/tas_Amon_E3SM-1-0_1pctCO2_r1i1p1f1_gr_000101-002512_OceanTemp.nc'
+  LandTemp_nc <- 'land-ocean-warming-ratio/scratch/nc_data/tas_Amon_E3SM-1-0_1pctCO2_r1i1p1f1_gr_000101-002512_LandTemp.nc'
+  
+  #WRONG BC NEED TO SEND IN THE TEMP DATA.....
+  #Is it possible to regrid with another .nc file bc we have the new grid weights all as seperate nc files....
+  #The example does not use CDO to do this, which suggests it is not neccesary 
+  system(paste(cdo_path, ' fldmean ', nc_area, " ", GloablTemp_nc))
+  
+  
+  
+  
   
   
   
