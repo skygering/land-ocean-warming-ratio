@@ -82,6 +82,7 @@ input_file <- 'Documents/land-ocean-warming-ratio/scratch/tas_annual_ipsl-cm5a-l
 output_file <- 'Documents/land-ocean-warming-ratio/scratch/r_tas_annual_mean.nc'
 system(paste(cdo_path, ' fldmean ', input_file, " ", output_file, sep = ""))
 
+
 r_w_mean_tas <- nc_open(output_file)
 r_tm_w = ncvar_get(r_w_mean_tas, "time")
 r_tas_w = ncvar_get(r_w_mean_tas, "tas")
