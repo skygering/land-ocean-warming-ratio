@@ -15,7 +15,7 @@ nc_open("land-ocean-warming-ratio/scratch/nc_data/sftlf_fx_E3SM-1-0_1pctCO2_r1i1
   ncvar_get("sftlf") -> land_frac
 
 nc_open("land-ocean-warming-ratio/scratch/nc_data/tas_Amon_E3SM-1-0_1pctCO2_r1i1p1f1_gr_000101-002512.nc") %>%
-  ncvar_get("time") %>% as.Date(time, "0001-01-01 00:00:00", tz = "PDT") -> time
+  ncvar_get("time") %>% as.Date("0001-01-01 00:00:00", tz = "PDT") -> time
 
 #all grid space that is not land is ocean
 ocean_frac = 1 - land_frac
@@ -48,9 +48,9 @@ land_frac_nc <- "land-ocean-warming-ratio/scratch/nc_data/sftlf_fx_E3SM-1-0_1pct
 
 
 # New Files to be created through CDO commands
-  LandArea_nc <- 'land-ocean-warming-ratio/scratch/nc_data/tas_Amon_E3SM-1-0_1pctCO2_r1i1p1f1_gr_000101-002512_LandArea.nc'
-  OceanFrac_nc <- 'land-ocean-warming-ratio/scratch/nc_data/tas_Amon_E3SM-1-0_1pctCO2_r1i1p1f1_gr_000101-002512_OceanFrac.nc'
-  OceanArea_nc <- 'land-ocean-warming-ratio/scratch/nc_data/tas_Amon_E3SM-1-0_1pctCO2_r1i1p1f1_gr_000101-002512_OceanArea.nc'
+  LandArea_nc <- 'land-ocean-warming-ratio/scratch/nc_data/LandArea.nc'
+  OceanFrac_nc <- 'land-ocean-warming-ratio/scratch/nc_data/OceanFrac.nc'
+  OceanArea_nc <- 'land-ocean-warming-ratio/scratch/nc_data/OceanArea.nc'
   
   cdo_path = '../../usr/local/Cellar/cdo/1.9.8/bin/cdo'
   
@@ -59,29 +59,31 @@ land_frac_nc <- "land-ocean-warming-ratio/scratch/nc_data/sftlf_fx_E3SM-1-0_1pct
   system2(cdo_path, args = c('-mulc,-1', '-addc,-1', land_frac_nc, OceanFrac_nc), stdout = TRUE, stderr = TRUE)
   system2(cdo_path, args = c('mul', area_nc, OceanFrac_nc, OceanArea_nc), stdout = TRUE, stderr = TRUE)
   
+  
   # Creating intermediate file linking temperature data to weighted grid cells -> will be overwritten for ocean, land, and global
   out1 <-'land-ocean-warming-ratio/scratch/nc_data/out1.nc'
   out2 <-'land-ocean-warming-ratio/scratch/nc_data/out2.nc'
   out3 <- 'land-ocean-warming-ratio/scratch/nc_data/out3.nc'
   
   # New file paths and names for the average temperatures calculated using fldmean and the weights calculated above
-  GlobalTemp_nc <- 'land-ocean-warming-ratio/scratch/nc_data/tas_Amon_E3SM-1-0_1pctCO2_r1i1p1f1_gr_000101-002512_GlobalTemp.nc'
-  OceanTemp_nc <- 'land-ocean-warming-ratio/scratch/nc_data/tas_Amon_E3SM-1-0_1pctCO2_r1i1p1f1_gr_000101-002512_OceanTemp.nc'
-  LandTemp_nc <- 'land-ocean-warming-ratio/scratch/nc_data/tas_Amon_E3SM-1-0_1pctCO2_r1i1p1f1_gr_000101-002512_LandTemp.nc'
+  GlobalTemp_nc <- 'land-ocean-warming-ratio/scratch/nc_data/GlobalTemp.nc'
+  OceanTemp_nc <- 'land-ocean-warming-ratio/scratch/nc_data/OceanTemp.nc'
+  LandTemp_nc <- 'land-ocean-warming-ratio/scratch/nc_data/LandTemp.nc'
   
   ###SETGRIDAREA isn't working right...
   
   #Land
-  system2(cdo_path, args = c(paste0('setgridarea,', LandArea_nc), temp_nc, out1), stdout = TRUE, stderr = TRUE)
+  system2(cdo_path, args = c('merge', temp_nc, LandArea_nc, out1), stdout = TRUE, stderr = TRUE)
   system2(cdo_path, args = c('-fldmean', out1, LandTemp_nc), stdout = TRUE, stderr = TRUE)
   
   #Ocean
-  system2(cdo_path, args = c(paste0('setgridarea,', OceanArea_nc), temp_nc, out2), stdout = TRUE, stderr = TRUE)
+  system2(cdo_path, args = c('merge', temp_nc, OceanArea_nc, out2), stdout = TRUE, stderr = TRUE)
   system2(cdo_path, args = c('-fldmean', out2, OceanTemp_nc), stdout = TRUE, stderr = TRUE)
   
   #Global
-  system2(cdo_path, args = c(paste0('setgridarea,', area_nc), temp_nc, out3), stdout = TRUE, stderr = TRUE)
+  system2(cdo_path, args = c('merge', temp_nc, area_nc, out3), stdout = TRUE, stderr = TRUE)
   system2(cdo_path, args = c('-fldmean', out3, GlobalTemp_nc), stdout = TRUE, stderr = TRUE)
+  
   
   #graphing land, ocean, and global from CDO
   
@@ -89,15 +91,7 @@ land_frac_nc <- "land-ocean-warming-ratio/scratch/nc_data/sftlf_fx_E3SM-1-0_1pct
   nc_open(LandTemp_nc) %>% ncvar_get("tas") -> land_temp_nc
   nc_open(OceanTemp_nc) %>% ncvar_get("tas") -> ocean_temp_nc
   nc_open(GlobalTemp_nc) %>% ncvar_get("tas") -> global_temp_nc
-  nc_open(GloablTemp_nc) %>%
-  ncvar_get("time") %>% as.Date(time, "0001-01-01 00:00:00", tz = "PDT") -> time_nc
-  
-  land_df <- data.frame(Time = time_nc, Temp = land_temp_nc)
-  ggplot(land_df, aes(x=Time, y=Temp)) + geom_line()
-  
-  ocean_df <- data.frame(Time = time_nc, Temp = ocean_temp_nc)
-  ggplot(land_df, aes(x=Time, y=Temp)) + geom_line()
-  
+  nc_open(temp_nc) %>% ncvar_get("time") %>% as.Date("0001-01-01", tz = "PDT") -> time_nc
   
   #make data frame (same code as above in R section)
   temp_frame_nc <- data.frame(Data = rep(c("Land", "Ocean", "Global"), each = 300),
