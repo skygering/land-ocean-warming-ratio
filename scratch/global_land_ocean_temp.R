@@ -6,13 +6,13 @@ library(dplyr)
 
 #opens nc files and saves variables [THESE CAN BE COMBINED WITH PIPELINES IF DONT USE CDO]
 nc_open("land-ocean-warming-ratio/scratch/nc_data/tas_Amon_E3SM-1-0_1pctCO2_r1i1p1f1_gr_000101-002512.nc") %>% 
-  ncvar_get(nc_temp, "tas") -> temp
+  ncvar_get("tas") -> temp
 
 nc_open("land-ocean-warming-ratio/scratch/nc_data/areacella_fx_E3SM-1-0_1pctCO2_r1i1p1f1_gr.nc") %>%
-  ncvar_get(nc_area, "areacella") -> area_cell
+  ncvar_get("areacella") -> area_cell
 
 nc_open("land-ocean-warming-ratio/scratch/nc_data/sftlf_fx_E3SM-1-0_1pctCO2_r1i1p1f1_gr.nc") %>%
-  ncvar_get(nc_frac, "sftlf") -> land_frac
+  ncvar_get("sftlf") -> land_frac
 
 nc_open("land-ocean-warming-ratio/scratch/nc_data/tas_Amon_E3SM-1-0_1pctCO2_r1i1p1f1_gr_000101-002512.nc") %>%
   ncvar_get("time") %>% as.Date(time, "0001-01-01 00:00:00", tz = "PDT") -> time
@@ -39,14 +39,6 @@ ggplot(temp_frame, aes(x = Time, y = Temp, group = Data)) + geom_line(aes(linety
   geom_point(aes(shape=Data, color=Data)) + ggtitle("Average Monthly Surface Temperature") + 
   theme(plot.title = element_text(hjust = 0.5)) + xlab("Time (year)") + ylab("Temp (K)")
 
-#QUESTIONS:
-#1) Why would I make netCDf files for any of these outputs? Seems simple to do in R
-#2) How do you use System2. I realized I used system() earlier and I don't understand the difference
-#3) Need to talk about how to calculate warming since it is a rate --  from when?
-#4) In the example file, it seems like the frac file was in %, not dec. What is standard?
-#5) How do I pull apart file names? In the example there is a parse_cmip_info function. 
-    #Should I try to write something or is this availible
-
 ####ALL IN CDO####
 
 # Original files that will be inputs
@@ -59,6 +51,7 @@ land_frac_nc <- "land-ocean-warming-ratio/scratch/nc_data/sftlf_fx_E3SM-1-0_1pct
   LandArea_nc <- 'land-ocean-warming-ratio/scratch/nc_data/tas_Amon_E3SM-1-0_1pctCO2_r1i1p1f1_gr_000101-002512_LandArea.nc'
   OceanFrac_nc <- 'land-ocean-warming-ratio/scratch/nc_data/tas_Amon_E3SM-1-0_1pctCO2_r1i1p1f1_gr_000101-002512_OceanFrac.nc'
   OceanArea_nc <- 'land-ocean-warming-ratio/scratch/nc_data/tas_Amon_E3SM-1-0_1pctCO2_r1i1p1f1_gr_000101-002512_OceanArea.nc'
+  
   cdo_path = '../../usr/local/Cellar/cdo/1.9.8/bin/cdo'
   
   # Calculating weights for land and ocean
@@ -66,22 +59,53 @@ land_frac_nc <- "land-ocean-warming-ratio/scratch/nc_data/sftlf_fx_E3SM-1-0_1pct
   system2(cdo_path, args = c('-mulc,-1', '-addc,-1', land_frac_nc, OceanFrac_nc), stdout = TRUE, stderr = TRUE)
   system2(cdo_path, args = c('mul', area_nc, OceanFrac_nc, OceanArea_nc), stdout = TRUE, stderr = TRUE)
   
+  # Creating intermediate file linking temperature data to weighted grid cells -> will be overwritten for ocean, land, and global
+  out1 <-'land-ocean-warming-ratio/scratch/nc_data/out1.nc'
+  out2 <-'land-ocean-warming-ratio/scratch/nc_data/out2.nc'
+  out3 <- 'land-ocean-warming-ratio/scratch/nc_data/out3.nc'
+  
   # New file paths and names for the average temperatures calculated using fldmean and the weights calculated above
-  GloablTemp_nc <- 'land-ocean-warming-ratio/scratch/nc_data/tas_Amon_E3SM-1-0_1pctCO2_r1i1p1f1_gr_000101-002512_GlobalTemp.nc'
+  GlobalTemp_nc <- 'land-ocean-warming-ratio/scratch/nc_data/tas_Amon_E3SM-1-0_1pctCO2_r1i1p1f1_gr_000101-002512_GlobalTemp.nc'
   OceanTemp_nc <- 'land-ocean-warming-ratio/scratch/nc_data/tas_Amon_E3SM-1-0_1pctCO2_r1i1p1f1_gr_000101-002512_OceanTemp.nc'
   LandTemp_nc <- 'land-ocean-warming-ratio/scratch/nc_data/tas_Amon_E3SM-1-0_1pctCO2_r1i1p1f1_gr_000101-002512_LandTemp.nc'
   
-  #WRONG BC NEED TO SEND IN THE TEMP DATA.....
-  #Is it possible to regrid with another .nc file bc we have the new grid weights all as seperate nc files....
-  #The example does not use CDO to do this, which suggests it is not neccesary 
-  #system(paste(cdo_path, ' fldmean, ', nc_area, " ",nc_temp, " ", GloablTemp_nc))
+  ###SETGRIDAREA isn't working right...
+  
+  #Land
+  system2(cdo_path, args = c(paste0('setgridarea,', LandArea_nc), temp_nc, out1), stdout = TRUE, stderr = TRUE)
+  system2(cdo_path, args = c('-fldmean', out1, LandTemp_nc), stdout = TRUE, stderr = TRUE)
+  
+  #Ocean
+  system2(cdo_path, args = c(paste0('setgridarea,', OceanArea_nc), temp_nc, out2), stdout = TRUE, stderr = TRUE)
+  system2(cdo_path, args = c('-fldmean', out2, OceanTemp_nc), stdout = TRUE, stderr = TRUE)
+  
+  #Global
+  system2(cdo_path, args = c(paste0('setgridarea,', area_nc), temp_nc, out3), stdout = TRUE, stderr = TRUE)
+  system2(cdo_path, args = c('-fldmean', out3, GlobalTemp_nc), stdout = TRUE, stderr = TRUE)
+  
+  #graphing land, ocean, and global from CDO
+  
+  #getting variables
+  nc_open(LandTemp_nc) %>% ncvar_get("tas") -> land_temp_nc
+  nc_open(OceanTemp_nc) %>% ncvar_get("tas") -> ocean_temp_nc
+  nc_open(GlobalTemp_nc) %>% ncvar_get("tas") -> global_temp_nc
+  nc_open(GloablTemp_nc) %>%
+  ncvar_get("time") %>% as.Date(time, "0001-01-01 00:00:00", tz = "PDT") -> time_nc
+  
+  land_df <- data.frame(Time = time_nc, Temp = land_temp_nc)
+  ggplot(land_df, aes(x=Time, y=Temp)) + geom_line()
+  
+  ocean_df <- data.frame(Time = time_nc, Temp = ocean_temp_nc)
+  ggplot(land_df, aes(x=Time, y=Temp)) + geom_line()
   
   
+  #make data frame (same code as above in R section)
+  temp_frame_nc <- data.frame(Data = rep(c("Land", "Ocean", "Global"), each = 300),
+                           Time = rep(time_nc, 3),
+                           Temp = c(land_temp_nc, ocean_temp_nc, global_temp_nc))
   
+  ggplot(temp_frame_nc, aes(x = Time, y = Temp, group = Data)) + geom_line(aes(linetype=Data, color=Data))+
+    geom_point(aes(color=Data)) + ggtitle("Average Monthly Surface Temperature") + 
+    theme(plot.title = element_text(hjust = 0.5)) + xlab("Time (year)") + ylab("Temp (K)")
   
-  
-  
-  
-  
-  
-}
+
