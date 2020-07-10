@@ -74,6 +74,7 @@ get_warming_constant = function(land_temp, ocean_temp, land_warming, ocean_warmi
   land_base <- land[1] *-1
   ocean_base <- ocean[1] *-1
   
+  #It doesn't like that I am adding variables..... might need to do in R?
   system2(cdo_path, args = c('addc,', land_base, land_temp, land_warming))
   system2(cdo_path, args = c('addc,', ocean_base, ocean_temp, ocean_warming))
   system2(cdo_path, args = c('div', land_warming, ocean_warming, ratio))
@@ -93,7 +94,9 @@ get_warming_constant = function(land_temp, ocean_temp, land_warming, ocean_warmi
   
   land_warming <- file.path(path_name, 'land_warming.nc')
   ocean_warming <- file.path(path_name, 'ocean_warming.nc')
-
+  ratio <- file.path(path_name, 'ratio.nc')
+  
+  get_warming_constant(land_temp, ocean_temp, land_warming, ocean_warming, ratio)
 
 
 
