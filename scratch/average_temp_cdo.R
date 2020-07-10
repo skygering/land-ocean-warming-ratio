@@ -49,7 +49,7 @@ get_weighted_areas = function(land_frac, land_area, ocean_area, cleanup = TRUE){
 #     annual_temp: as specified above - saved at path_name
 
 get_annual_temp = function(weight_area, annual_temp, cleanup = TRUE){
-  
+  assertthat::assert_that(file.exists(weight_area))
   #file to be created
   combo <-file.path(path_name, 'combo_weight_temp.nc')  # temp and weighted area parameteres in same netCDF files so weighted mean can be calculated
   

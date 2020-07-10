@@ -1,3 +1,5 @@
+#SHOULD I PUT THIS IN THE SAME FILE AS TEMP CALCULATIONS (average_temp_cdo.R?)
+
 # get_warming_constant:
 # calculates the land-ocean warming constant for each timestep from the first temperature listed in land and ocean respectivly (historical data)
 # inputs: 
@@ -12,19 +14,19 @@
 get_warming_constant = function(land_temp, ocean_temp, land_warming, ocean_warming, ratio){
   nc_open(land_temp) %>% ncvar_get("tas") -> land
   nc_open(ocean_temp) %>% ncvar_get("tas") -> ocean
-  land_base <- land[1] *-1
-  ocean_base <- ocean[1] *-1
+  land_base <- land[1]
+  ocean_base <- ocean[1]
   
-  #It doesn't like that I am adding variables..... might need to do in R?
-  #Not 3D data anymore -> since 2D use R
-  #extract and save as a csv file
-  system2(cdo_path, args = c('addc,', land_base, land_temp, land_warming))
-  system2(cdo_path, args = c('addc,', ocean_base, ocean_temp, ocean_warming))
-  system2(cdo_path, args = c('div', land_warming, ocean_warming, ratio))
+  land_warming <- land - land_base
+  ocean_warming <- ocean - ocean_base
+  warming_ratio <- land_warming/ocean_warming
 }
 
-#land_warming <- file.path(path_name, 'land_warming.nc')
-#ocean_warming <- file.path(path_name, 'ocean_warming.nc')
-#ratio <- file.path(path_name, 'ratio.nc')
+warming_frame <- data.frame(Time = time, Warming = warming_ratio)
+ggplot(warming_frame, aes(x = Time, y = Warming)) + geom_line()+
+  geom_point() + ggtitle("Land-Ocean Warming Ratio") + 
+  theme(plot.title = element_text(hjust = 0.5)) + xlab("Time (year)") + ylab("Temp (K)")
 
-#get_warming_constant(land_temp, ocean_temp, land_warming, ocean_warming, ratio)
+#MOST SEEM TO BE GREATER THAN OR EQUAL TO 1 -> MONTHLY DATA MAKES IT VERY WEIRD SINCE IT GETS COLD...
+
+get_warming_constant(land_temp, ocean_temp, land_warming, ocean_warming, ratio)
