@@ -22,11 +22,23 @@ get_warming_constant = function(land_temp, ocean_temp, land_warming, ocean_warmi
   warming_ratio <- land_warming/ocean_warming
 }
 
-warming_frame <- data.frame(Time = time, Warming = warming_ratio)
-ggplot(warming_frame, aes(x = Time, y = Warming)) + geom_line()+
-  geom_point() + ggtitle("Land-Ocean Warming Ratio") + 
-  theme(plot.title = element_text(hjust = 0.5)) + xlab("Time (year)") + ylab("Temp (K)")
 
-#MOST SEEM TO BE GREATER THAN OR EQUAL TO 1 -> MONTHLY DATA MAKES IT VERY WEIRD SINCE IT GETS COLD...
 
-get_warming_constant(land_temp, ocean_temp, land_warming, ocean_warming, ratio)
+#getting variables
+nc_open(land_temp) %>% ncvar_get("tas") -> land_tas
+nc_open(ocean_temp) %>% ncvar_get("tas") -> ocean_tas
+nc_open(global_temp) %>% ncvar_get("tas") -> global_tas
+
+nc_open(land_temp) %>% ncvar_get("time") %>% as.Date('1850-01-01') -> time
+
+#make data frame (same code as above in R section)
+temp_frame <- data.frame(Data = rep(c("Land", "Ocean", "Global"), each = dim(time)),
+                         Time = rep(time, 3),
+                         Temp = c(land_tas, ocean_tas, global_tas))
+
+#graphing
+ggplot(temp_frame, aes(x = Time, y = Temp, group = Data)) + geom_line(aes(linetype=Data, color=Data))+
+  ggtitle("Average Surface Temperature") + 
+  theme(plot.title = element_text(hjust = 0.5)) + xlab("Time (year)") + ylab("Temp (K)") 
+
+

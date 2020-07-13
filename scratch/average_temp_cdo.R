@@ -1,7 +1,3 @@
-library(ncdf4)
-library(ggplot2)
-library(dplyr)
-
 #get_weighted_area:
 #Calculates and saves the fraction of each grid that is land and ocean in decimal form (max 1, min 0) and saves both
 #inputs:
@@ -52,15 +48,16 @@ get_annual_temp = function(weight_area, annual_temp, cleanup = TRUE){
   assertthat::assert_that(file.exists(weight_area))
   #file to be created
   combo <-file.path(path_name, 'combo_weight_temp.nc')  # temp and weighted area parameteres in same netCDF files so weighted mean can be calculated
-  
+  month_temp <- file.path(path_name, 'month_temp.nc')
   #calculates weighted average temperature for each timestep
   combo <-file.path(path_name, 'combo_weight_temp.nc')
   system2(cdo_path, args = c('merge', temp, weight_area, combo), stdout = TRUE, stderr = TRUE)
-  system2(cdo_path, args = c('-fldmean', combo, annual_temp), stdout = TRUE, stderr = TRUE)
-  assertthat::assert_that(file.exists(combo))
-  
+  system2(cdo_path, args = c('-fldmean', combo, month_temp), stdout = TRUE, stderr = TRUE)
+  system2(cdo_path, args = c('yearmonmean', month_temp, annual_temp), stdout = TRUE, stderr = TRUE) #Might be able to combine on PIC -> seg fault rn
+
   if(cleanup){
     file.remove(combo)
+    file.remove(month_temp)
     if(!identical(weight_area, area)){  # don't want to remove area if it is for global temperature
       file.remove(weight_area)
     }
@@ -70,43 +67,23 @@ get_annual_temp = function(weight_area, annual_temp, cleanup = TRUE){
 
 ### MAIN ###
 #These are paths that are specific to your computer and need to be adjusted before running this script
-path_name = 'land-ocean-warming-ratio/scratch/nc_data'
-cdo_path = '../../usr/local/Cellar/cdo/1.9.8/bin/cdo'
 
-# This is the data that you want to analyize (3 .nc files). They need to be in the same file as path_name
-temp <- file.path(path_name, 'tas_Amon_ACCESS-CM2_historical_r1i1p1f1_gn_185001-201412.nc')
-area <- file.path(path_name, 'areacella_fx_ACCESS-CM2_historical_r1i1p1f1_gn.nc')
-land_frac <- file.path(path_name, 'sftlf_fx_ACCESS-CM2_historical_r1i1p1f1_gn.nc')
-
-land_area <-  file.path(path_name, 'land_area.nc')
-ocean_area <- file.path(path_name, 'ocean_area.nc')
-get_weighted_areas(land_frac, land_area, ocean_area)
+land_ocean_temps = function(path_name, cdo_path, temp, area, land_frac, cleanup = TRUE){
   
-land_temp <- file.path(path_name, 'land_temp.nc')
-ocean_temp <- file.path(path_name, 'ocean_temp.nc')
-global_temp <- file.path(path_name, 'global_temp.nc')
+  land_area <-  file.path(path_name, 'land_area.nc')
+  ocean_area <- file.path(path_name, 'ocean_area.nc')
+  get_weighted_areas(land_frac, land_area, ocean_area, cleanup)
   
-get_annual_temp(land_area, land_temp)
-get_annual_temp(ocean_area, ocean_temp)
-get_annual_temp(area, global_temp)
+  land_temp <- file.path(path_name, 'land_temp.nc')
+  ocean_temp <- file.path(path_name, 'ocean_temp.nc')
+  global_temp <- file.path(path_name, 'global_temp.nc')
+  
+  get_annual_temp(land_area, land_temp, cleanup)
+  get_annual_temp(ocean_area, ocean_temp, cleanup)
+  get_annual_temp(area, global_temp, cleanup)
+}
 
 
-#getting variables
-nc_open(land_temp) %>% ncvar_get("tas") -> land_tas
-nc_open(ocean_temp) %>% ncvar_get("tas") -> ocean_tas
-nc_open(global_temp) %>% ncvar_get("tas") -> global_tas
 
-nc_open(temp) %>% ncvar_get("time") %>% as.Date('1850-01-01', tz = "PDT") -> time
-
-#make data frame (same code as above in R section)
-temp_frame <- data.frame(Data = rep(c("Land", "Ocean", "Global"), each = dim(time)),
-                            Time = rep(time, 3),
-                            Temp = c(land_tas, ocean_tas, global_tas))
-
-#graphing
-ggplot(temp_frame, aes(x = Time, y = Temp, group = Data)) + geom_line(aes(linetype=Data, color=Data))+
-  geom_point(aes(color=Data)) + ggtitle("Average Surface Temperature") + 
-  theme(plot.title = element_text(hjust = 0.5)) + xlab("Time (year)") + ylab("Temp (K)") +
-  coord_cartesian()
 
 
