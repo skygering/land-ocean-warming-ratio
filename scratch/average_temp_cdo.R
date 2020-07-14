@@ -1,3 +1,7 @@
+library(ncdf4)
+library(ggplot2)
+library(dplyr)
+
 #get_weighted_area:
 #Calculates and saves the fraction of each grid that is land and ocean in decimal form (max 1, min 0) and saves both
 #inputs:
@@ -46,9 +50,11 @@ get_weighted_areas = function(land_frac, land_area, ocean_area, cleanup = TRUE){
 
 get_annual_temp = function(weight_area, annual_temp, cleanup = TRUE){
   assertthat::assert_that(file.exists(weight_area))
+  
   #file to be created
   combo <-file.path(path_name, 'combo_weight_temp.nc')  # temp and weighted area parameteres in same netCDF files so weighted mean can be calculated
   month_temp <- file.path(path_name, 'month_temp.nc')
+  
   #calculates weighted average temperature for each timestep
   combo <-file.path(path_name, 'combo_weight_temp.nc')
   system2(cdo_path, args = c('merge', temp, weight_area, combo), stdout = TRUE, stderr = TRUE)
@@ -65,10 +71,19 @@ get_annual_temp = function(weight_area, annual_temp, cleanup = TRUE){
 }
 
 
-### MAIN ###
-#These are paths that are specific to your computer and need to be adjusted before running this script
+# land_ocean_temps:
+# Calculates average annual temperatures for land, ocean, and global
+# Inputs:
+#       path_name: path to a folder where the output .nc files will be stored
+#       cdo_path: path to where the cdo.exe is located on the local computer
+#       temp: .nc file location that contains the monthly temperature data
+#       area: .nc file location that contains the area of each grid cell 
+#       land_fac: .nc file location that contains the percent of each grid cell that is land
+# Outputs:
+#       Three .nc files (land_temp.nc, ocean_temp.nc, and global_temp.nc) which contain annual average temperatures -
+#       Located at path_name
 
-land_ocean_temps = function(path_name, cdo_path, temp, area, land_frac, cleanup = TRUE){
+land_ocean_global_temps = function(path_name, cdo_path, temp, area, land_frac, cleanup = TRUE){
   
   land_area <-  file.path(path_name, 'land_area.nc')
   ocean_area <- file.path(path_name, 'ocean_area.nc')
