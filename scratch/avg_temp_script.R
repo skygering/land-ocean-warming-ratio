@@ -1,9 +1,9 @@
 library(plyr)
 
 path_name = 'land-ocean-warming-ratio/scratch/nc_data' #Where do we save data to?
-cdo_path = '../../usr/local/Cellar/cdo/1.9.8/bin/cdo' #Where is cdo located on PIC
+cdo_path = '../../share/apps/netcdf/4.3.2/gcc/4.4.7/bin/cdo'
 
-source(path_file(path_name, 'average_temp_cdo.R'))  # access to functions to calculate annual temperature -> where is it?
+source('land-ocean-warming-ratio/scratch/average_temp_cdo.R')  # access to functions to calculate annual temperature -> where is it?
 
 # get_usable_models:
 # get a list of the models in the given ensemble with temperature data, areacella data, and sftlf data
@@ -18,13 +18,14 @@ get_usable_models = function(ensemble_data){
   intersect(intersect(tas_models, areacella_models), sftlf_models)
 }
 
-# get_file:
+# get_file_location:
 # given a model and a data type get the path to the file within PIC
 # input: data frame of ensemble data
 # output: file path
-get_file = function(ensemble_data, model, data_type){
+get_file_location = function(ensemble_data, model, data_type){
   ensemble_data[c(ensemble_data$model == model & ensemble_data$variable == data_type),]$file
 }
+
 
 ### MAIN ###
 
@@ -45,19 +46,21 @@ for(e in ensembles){
   models_with_data <- get_usable_models(ensemble_data)
   
   for(model in models_with_data){
-    temp <- get_file(ensemble_data, model, 'tas')
-    area <- get_file(ensemble_data, model, 'areacella')
-    land_frac <- get_file(ensemble_data, model, 'sftlf')
+    temp <- get_file_location(ensemble_data, model, 'tas')
+    area <- get_file_location(ensemble_data, model, 'areacella')
+    land_frac <- get_file_location(ensemble_data, model, 'sftlf')
     
-    model_path_name <- file.path(path_name, paste0(e, '_', model))  # data for each model and ensemble will have its own folder
+    model_ensemble = paste0(e, '_', model)
+    
+    model_path_name <- file.path(path_name, model_ensemble)  # data for each model and ensemble will have its own folder
     dir.create(model_path_name)
   
-    land_ocean_global_temps(model_path_name, cdo_path, temp, area, land_frac, TRUE)
+    land_ocean_global_temps(model_path_name, cdo_path, model_ensemble, temp, area, land_frac, TRUE)
     
-    nc_open(file.path(path_name, 'land_temp.nc')) %>% ncvar_get("tas") -> land_tas
-    nc_open(file.path(path_name, 'ocean_temp.nc')) %>% ncvar_get("tas") -> ocean_tas
-    nc_open(file.path(path_name, 'global_temp.nc')) %>% ncvar_get("tas") -> global_tas
-    nc_open(file.path(path_name, 'land_temp.nc')) %>% ncvar_get("time") -> time
+    nc_open(file.path(model_path_name, paste0(model_ensemble,'land_temp.nc'))) %>% ncvar_get("tas") -> land_tas
+    nc_open(file.path(model_path_name, paste0(model_ensemble,'ocean_temp.nc'))) %>% ncvar_get("tas") -> ocean_tas
+    nc_open(file.path(model_path_name, paste0(model_ensemble,'global_temp.nc'))) %>% ncvar_get("tas") -> global_tas
+    nc_open(file.path(model_path_name, paste0(model_ensemble,'land_temp.nc'))) %>% ncvar_get("time") -> time
     
     # create data frame out of land, ocean, and global annual data
     temp_frame <- data.frame(Ensemble = rep(e, dim(time)),

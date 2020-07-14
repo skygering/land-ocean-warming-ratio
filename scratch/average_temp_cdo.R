@@ -18,12 +18,12 @@ get_weighted_areas = function(land_frac, land_area, ocean_area, cleanup = TRUE){
   
   nc_open(land_frac) %>% ncvar_get('sftlf') %>% max(na.rm = FALSE) -> max_frac
   if(max_frac > 1){
-    land_frac_dec <- file.path(path_name, "land_frac.nc")
+    land_frac_dec <- file.path(path_name, paste0(model_ensemble,"_land_frac.nc"))
     system2(cdo_path, args = c('divc,100', land_frac, land_frac_dec))
     land_frac <- land_frac_dec
   }
   
-  ocean_frac <- file.path(path_name, 'ocean_frac.nc')
+  ocean_frac <- file.path(path_name, paste0(model_ensemble,'_ocean_frac.nc'))
   system2(cdo_path, args = c('-mulc,-1', '-addc,-1', land_frac, ocean_frac), stdout = TRUE, stderr = TRUE)
   
   #calculates weighted area
@@ -52,11 +52,10 @@ get_annual_temp = function(weight_area, annual_temp, cleanup = TRUE){
   assertthat::assert_that(file.exists(weight_area))
   
   #file to be created
-  combo <-file.path(path_name, 'combo_weight_temp.nc')  # temp and weighted area parameteres in same netCDF files so weighted mean can be calculated
-  month_temp <- file.path(path_name, 'month_temp.nc')
+  combo <-file.path(path_name, paste0(model_ensemble,'_combo_weight_temp.nc'))  # temp and weighted area parameteres in same netCDF files so weighted mean can be calculated
+  month_temp <- file.path(path_name, paste0(model_ensemble,'_month_temp.nc'))
   
   #calculates weighted average temperature for each timestep
-  combo <-file.path(path_name, 'combo_weight_temp.nc')
   system2(cdo_path, args = c('merge', temp, weight_area, combo), stdout = TRUE, stderr = TRUE)
   system2(cdo_path, args = c('-fldmean', combo, month_temp), stdout = TRUE, stderr = TRUE)
   system2(cdo_path, args = c('yearmonmean', month_temp, annual_temp), stdout = TRUE, stderr = TRUE) #Might be able to combine on PIC -> seg fault rn
@@ -83,15 +82,15 @@ get_annual_temp = function(weight_area, annual_temp, cleanup = TRUE){
 #       Three .nc files (land_temp.nc, ocean_temp.nc, and global_temp.nc) which contain annual average temperatures -
 #       Located at path_name
 
-land_ocean_global_temps = function(path_name, cdo_path, temp, area, land_frac, cleanup = TRUE){
+land_ocean_global_temps = function(path_name, cdo_path, model_ensemble, temp, area, land_frac, cleanup = TRUE){
   
-  land_area <-  file.path(path_name, 'land_area.nc')
-  ocean_area <- file.path(path_name, 'ocean_area.nc')
+  land_area <-  file.path(path_name, paste0(model_ensemble, '_land_area.nc'))
+  ocean_area <- file.path(path_name, paste0(model_ensemble, '_ocean_area.nc'))
   get_weighted_areas(land_frac, land_area, ocean_area, cleanup)
   
-  land_temp <- file.path(path_name, 'land_temp.nc')
-  ocean_temp <- file.path(path_name, 'ocean_temp.nc')
-  global_temp <- file.path(path_name, 'global_temp.nc')
+  land_temp <- file.path(path_name, paste0(model_ensemble, '_land_temp.nc'))
+  ocean_temp <- file.path(path_name, paste0(model_ensemble, '_ocean_temp.nc'))
+  global_temp <- file.path(path_name, paste0(model_ensemble, '_global_temp.nc'))
   
   get_annual_temp(land_area, land_temp, cleanup)
   get_annual_temp(ocean_area, ocean_temp, cleanup)
