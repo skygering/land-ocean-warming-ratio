@@ -46,7 +46,7 @@ for(e in ensembles){
   models_with_data <- get_usable_models(ensemble_data)
   
   #FOR TESTING SET MODELS_WITH_DATA TO FIRST ELEMENT
-  model <- models_with_data[1]
+  models_with_data <- models_with_data[1]
   
   for(model in models_with_data){
     temp <- get_file_location(ensemble_data, model, 'tas')
