@@ -1,9 +1,9 @@
 library(plyr)
 
-path_name = 'land-ocean-warming-ratio/scratch/nc_data' #Where do we save data to?
+path_name = 'pic/projects/GCAM/Gering/land-ocean-warming-ratio' #Where do we save data to?
 cdo_path = '../../share/apps/netcdf/4.3.2/gcc/4.4.7/bin/cdo'
 
-source('land-ocean-warming-ratio/scratch/average_temp_cdo.R')  # access to functions to calculate annual temperature -> where is it?
+source(file.path(path_name, 'average_temp_cdo.R'))  # access to functions to calculate annual temperature -> where is it?
 
 # get_usable_models:
 # get a list of the models in the given ensemble with temperature data, areacella data, and sftlf data
@@ -45,6 +45,9 @@ for(e in ensembles){
   ensemble_data <- historical_data[historical_data$ensemble == e, ]
   models_with_data <- get_usable_models(ensemble_data)
   
+  #FOR TESTING SET MODELS_WITH_DATA TO FIRST ELEMENT
+  model <- models_with_data[1]
+  
   for(model in models_with_data){
     temp <- get_file_location(ensemble_data, model, 'tas')
     area <- get_file_location(ensemble_data, model, 'areacella')
@@ -68,10 +71,11 @@ for(e in ensembles){
                              Data = rep(c("Land", "Ocean", "Global"), each = dim(time)),
                              Time = rep(time, 3),
                              Temp = c(land_tas, ocean_tas, global_tas))
+    write.csv(temp_frame, file.path(model_path_name, paste0(model_ensemble, "_temp.csv")))
     
     df_temps <- rbind.fill(df_temps, temp_frame)
   }
 }
 
-write.csv(df_temps, file.path(path_name, 'temp.csv'))  # write data from all models and ensembles to .csv at path_name
+write.csv(df_temps, file.path(path_name, 'temp.csv'), row.names = FALSE)  # write data from all models and ensembles to .csv at path_name
 
