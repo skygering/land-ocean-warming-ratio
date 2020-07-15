@@ -60,10 +60,10 @@ for(e in ensembles){
   
     land_ocean_global_temps(model_path_name, cdo_path, model_ensemble, temp, area, land_frac, TRUE)
     
-    nc_open(file.path(model_path_name, paste0(model_ensemble,'land_temp.nc'))) %>% ncvar_get("tas") -> land_tas
-    nc_open(file.path(model_path_name, paste0(model_ensemble,'ocean_temp.nc'))) %>% ncvar_get("tas") -> ocean_tas
-    nc_open(file.path(model_path_name, paste0(model_ensemble,'global_temp.nc'))) %>% ncvar_get("tas") -> global_tas
-    nc_open(file.path(model_path_name, paste0(model_ensemble,'land_temp.nc'))) %>% ncvar_get("time") -> time
+    nc_open(file.path(model_path_name, paste0(model_ensemble,'_land_temp.nc'))) %>% ncvar_get("tas") -> land_tas
+    nc_open(file.path(model_path_name, paste0(model_ensemble,'_ocean_temp.nc'))) %>% ncvar_get("tas") -> ocean_tas
+    nc_open(file.path(model_path_name, paste0(model_ensemble,'_global_temp.nc'))) %>% ncvar_get("tas") -> global_tas
+    nc_open(file.path(model_path_name, paste0(model_ensemble,'_land_temp.nc'))) %>% ncvar_get("time") -> time
     
     # create data frame out of land, ocean, and global annual data
     temp_frame <- data.frame(Ensemble = rep(e, dim(time)),
