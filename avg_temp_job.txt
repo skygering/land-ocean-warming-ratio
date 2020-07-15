@@ -8,5 +8,5 @@
 #SBATCH -J averageAnnualTemps
 
 module load R/3.4.3
-Rscript average_temp_script.R
+Rscript /pic/projects/GCAM/Gering/land-ocean-warming-ratio/average_temp_script.R
 
