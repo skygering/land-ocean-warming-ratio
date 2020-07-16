@@ -13,10 +13,9 @@ library(dplyr)
 #     land_area.nc and ocean_area.nc: as specified above - saved at path_name
 
 get_weighted_areas = function(land_frac, land_area, ocean_area, cleanup = TRUE){
-  assertthat::assert_that(file.exists(land_frac))
-  assertthat::assert_that(file.exists(area))
   
   nc_open(land_frac) %>% ncvar_get('sftlf') %>% max(na.rm = FALSE) -> max_frac
+  
   if(max_frac > 1){
     land_frac_dec <- file.path(path_name, paste0(model_ensemble,"_land_frac.nc"))
     system2(cdo_path, args = c('divc,100', land_frac, land_frac_dec))
@@ -50,21 +49,22 @@ get_weighted_areas = function(land_frac, land_area, ocean_area, cleanup = TRUE){
 
 get_annual_temp = function(weight_area, annual_temp, cleanup = TRUE){
   assertthat::assert_that(file.exists(weight_area))
-  
-  #file to be created
-  combo <-file.path(path_name, paste0(model_ensemble,'_combo_weight_temp.nc'))  # temp and weighted area parameteres in same netCDF files so weighted mean can be calculated
-  month_temp <- file.path(path_name, paste0(model_ensemble,'_month_temp.nc'))
-  
-  #calculates weighted average temperature for each timestep
-  system2(cdo_path, args = c('merge', temp, weight_area, combo), stdout = TRUE, stderr = TRUE)
-  system2(cdo_path, args = c('-fldmean', combo, month_temp), stdout = TRUE, stderr = TRUE)
-  system2(cdo_path, args = c('yearmonmean', month_temp, annual_temp), stdout = TRUE, stderr = TRUE) #Might be able to combine on PIC -> seg fault rn
-
-  if(cleanup){
-    file.remove(combo)
-    file.remove(month_temp)
-    if(!identical(weight_area, area)){  # don't want to remove area if it is for global temperature
-      file.remove(weight_area)
+  if(!file.exists(annual_temp)){
+    #file to be created
+    combo <-file.path(path_name, paste0(model_ensemble,'_combo_weight_temp.nc'))  # temp and weighted area parameteres in same netCDF files so weighted mean can be calculated
+    month_temp <- file.path(path_name, paste0(model_ensemble,'_month_temp.nc'))
+    
+    #calculates weighted average temperature for each timestep
+    system2(cdo_path, args = c('merge', temp, weight_area, combo), stdout = TRUE, stderr = TRUE)
+    system2(cdo_path, args = c('-fldmean', combo, month_temp), stdout = TRUE, stderr = TRUE)
+    system2(cdo_path, args = c('-a', 'yearmonmean', month_temp, annual_temp), stdout = TRUE, stderr = TRUE) #Might be able to combine on PIC -> seg fault rn
+    
+    if(cleanup){
+      file.remove(combo)
+      file.remove(month_temp)
+      if(!identical(weight_area, area)){  # don't want to remove area if it is for global temperature
+        file.remove(weight_area)
+      }
     }
   }
 }
@@ -83,18 +83,25 @@ get_annual_temp = function(weight_area, annual_temp, cleanup = TRUE){
 #       Located at path_name
 
 land_ocean_global_temps = function(path_name, cdo_path, model_ensemble, temp, area, land_frac, cleanup = TRUE){
+  assertthat::assert_that(file.exists(temp))
+  assertthat::assert_that(file.exists(area))
+  assertthat::assert_that(file.exists(land_frac))
   
   land_area <-  file.path(path_name, paste0(model_ensemble, '_land_area.nc'))
   ocean_area <- file.path(path_name, paste0(model_ensemble, '_ocean_area.nc'))
-  get_weighted_areas(land_frac, land_area, ocean_area, cleanup)
+  if(!file.exists(land_area) && !file.exists(ocean_area)){
+    get_weighted_areas(land_frac, land_area, ocean_area, cleanup)
+  }
   
   land_temp <- file.path(path_name, paste0(model_ensemble, '_land_temp.nc'))
   ocean_temp <- file.path(path_name, paste0(model_ensemble, '_ocean_temp.nc'))
   global_temp <- file.path(path_name, paste0(model_ensemble, '_global_temp.nc'))
   
+
   get_annual_temp(land_area, land_temp, cleanup)
   get_annual_temp(ocean_area, ocean_temp, cleanup)
   get_annual_temp(area, global_temp, cleanup)
+ 
 }
 
 
