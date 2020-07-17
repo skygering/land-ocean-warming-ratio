@@ -113,7 +113,8 @@ land_ocean_global_temps = function(path_name, cdo_path, ensemble_model, temp, ar
   
   for (t in temp){
     assertthat::assert_that(file.exists(t))
-    print("in temp loop")
+    print("in temp loop and here is the temp file:")
+    print(t)
     
     land_temp <- file.path(path_name, paste0(ensemble_model, '_land_temp_', counter, '.nc'))
     ocean_temp <- file.path(path_name, paste0(ensemble_model, '_ocean_temp_', counter, '.nc'))

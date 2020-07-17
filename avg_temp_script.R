@@ -70,7 +70,7 @@ for(e in ensembles){
     print("out of average_temp_")
     dir.create(model_path_name)
     
-    df_model <- land_ocean_global_temps(model_path_name, cdo_path, ensemble_model, temp, area, land_frac, TRUE)
+    df_model <- land_ocean_global_temps(model_path_name, cdo_path, ensemble_model, temp, area, land_frac, FALSE)
     df_temps <- rbind.fill(df_temps, df_model)
   }
 }
