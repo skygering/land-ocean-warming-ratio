@@ -32,7 +32,7 @@ get_file_location = function(ensemble_data, model, var){
                     ensemble_data$variable == var &
                     ensemble_data$grid != 'gr2'),]  # do not want data gridded with 'gr2'
   if (var == 'tas'){
-    model_data<- model_data[c(model_data$domain == 'Amon'),]  # only want monthly data
+    model_data <- model_data[c(model_data$domain == 'Amon'),]  # only want monthly data
   }
   model_data$file #return the list of files
 }
@@ -44,8 +44,7 @@ get_file_location = function(ensemble_data, model, var){
 archive <- readr::read_csv(url("https://raw.githubusercontent.com/JGCRI/CMIP6/master/cmip6_archive_index.csv"))
 historical_data <- archive[c(archive$experiment == 'historical' & archive$variable %in% c('tas', 'areacella', 'sftlf')),]
 
-df_temps <- data.frame(Ensemble = character(),
-                      Model = character(),
+df_temps <- data.frame(Ensemble_Model = character(),
                       Data = character(),
                       Time = integer(),
                       Temp = double())
@@ -56,44 +55,21 @@ for(e in ensembles){
   ensemble_data <- historical_data[historical_data$ensemble == e, ]
   models_with_data <- get_usable_models(ensemble_data)
   
+  #FOR TESTING
   models_with_data <- models_with_data[11:12]
   
   for(model in models_with_data){
-    temps <- get_file_location(ensemble_data, model, 'tas')
+    temp <- get_file_location(ensemble_data, model, 'tas')
     area <- get_file_location(ensemble_data, model, 'areacella')
     land_frac <- get_file_location(ensemble_data, model, 'sftlf')
     
-    model_ensemble = paste0(e, '_', model)
+    ensemble_model = paste0(e, '_', model)
     
-    model_path_name <- file.path(path_name, model_ensemble)  # data for each model and ensemble will have its own folder
+    model_path_name <- file.path(path_name, ensemble_model)  # data for each model and ensemble will have its own folder
     dir.create(model_path_name)
     
-    df_model <- data.frame(Ensemble = character(),
-                           Model = character(),
-                           Data = character(),
-                           Time = integer(),
-                           Temp = double())
-    
-    for(temp in temps){
-      
-      land_ocean_global_temps(model_path_name, cdo_path, model_ensemble, temp, area, land_frac, TRUE)
-      
-      nc_open(file.path(model_path_name, paste0(model_ensemble,'_land_temp.nc'))) %>% ncvar_get("tas") -> land_tas
-      nc_open(file.path(model_path_name, paste0(model_ensemble,'_ocean_temp.nc'))) %>% ncvar_get("tas") -> ocean_tas
-      nc_open(file.path(model_path_name, paste0(model_ensemble,'_global_temp.nc'))) %>% ncvar_get("tas") -> global_tas
-      nc_open(file.path(model_path_name, paste0(model_ensemble,'_land_temp.nc'))) %>% ncvar_get("time") -> time
-      
-      temp_frame <- data.frame(Ensemble = rep(e, dim(time)),
-                               Model = rep(model, dim(time)),
-                               Data = rep(c("Land", "Ocean", "Global"), each = dim(time)),
-                               Time = rep(time, 3),
-                               Temp = c(land_tas, ocean_tas, global_tas))
-      
-      model_temps <- rbind.fill(df_model, temp_frame)
-    }
-    
-    write.csv(model_temps, file.path(model_path_name, paste0(model_ensemble, "_temp.csv")), row.names = FALSE)
-    df_temps <- rbind.fill(df_temps, model_temps)
+    df_model <- land_ocean_global_temps(model_path_name, cdo_path, ensemble_model, temp, area, land_frac, TRUE)
+    df_temps <- rbind.fill(df_temps, df_model)
   }
 }
 
