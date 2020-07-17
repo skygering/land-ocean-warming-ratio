@@ -58,9 +58,6 @@ for(e in ensembles){
   ensemble_data <- historical_data[historical_data$ensemble == e, ]
   models_with_data <- get_usable_models(ensemble_data)
   
-  #FOR TESTING
-  models_with_data <- models_with_data[11:12]
-  
   for(model in models_with_data){
     temp <- get_file_location(ensemble_data, model, 'tas')
     area <- get_file_location(ensemble_data, model, 'areacella')
