@@ -67,10 +67,10 @@ for(e in ensembles){
     
     print("about to enter average_temp_cdo.R")
     model_path_name <- file.path(path_name, ensemble_model)  # data for each model and ensemble will have its own folder
-    print("out of average_temp_cdo.R")
+    print("out of average_temp_")
     dir.create(model_path_name)
     
-    df_model <- land_ocean_global_temps(model_path_name, cdo_path, ensemble_model, temp, area, land_frac, TRUE)
+    df_model <- land_ocean_global_temps(model_path_name, cdo_path, ensemble_model, temp, area, land_frac, FALSE)
     df_temps <- rbind.fill(df_temps, df_model)
   }
 }
