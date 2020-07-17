@@ -1,7 +1,10 @@
 library(plyr)
 
-path_name = '/pic/projects/GCAM/Gering/land-ocean-warming-ratio' #Where do we save data to?
-cdo_path = '/share/apps/netcdf/4.3.2/gcc/4.4.7/bin/cdo'
+path_name = '/Users/skylargering/land-ocean-warming-ratio'
+cdo_path = '/usr/local/Cellar/cdo/1.9.8/bin/cdo'
+
+#path_name = '/pic/projects/GCAM/Gering/land-ocean-warming-ratio' #Where do we save data to?
+#cdo_path = '/share/apps/netcdf/4.3.2/gcc/4.4.7/bin/cdo'
 
 source(file.path(path_name, 'average_temp_cdo.R'))  # access to functions to calculate annual temperature
 
@@ -56,7 +59,7 @@ for(e in ensembles){
   models_with_data <- get_usable_models(ensemble_data)
   
   #FOR TESTING
-  models_with_data <- models_with_data[11]
+  models_with_data <- models_with_data[12]
   
   for(model in models_with_data){
     temp <- get_file_location(ensemble_data, model, 'tas')
@@ -67,14 +70,14 @@ for(e in ensembles){
     
     print("about to enter average_temp_cdo.R")
     model_path_name <- file.path(path_name, ensemble_model)  # data for each model and ensemble will have its own folder
-    print("out of average_temp_")
     dir.create(model_path_name)
     
-    df_model <- land_ocean_global_temps(model_path_name, cdo_path, ensemble_model, temp, area, land_frac, FALSE)
+    df_model <- land_ocean_global_temps(model_path_name, cdo_path, ensemble_model, temp, area, land_frac, TRUE)
+    print("out of average_temp_")
     df_temps <- rbind.fill(df_temps, df_model)
   }
 }
 
 # write data from all models and ensembles to .csv at path_name
-write.csv(df_temps, file.path(path_name, 'temp.csv'), row.names = FALSE)
+write.csv(df_model, file.path(path_name, 'temp.csv'), row.names = FALSE)
 

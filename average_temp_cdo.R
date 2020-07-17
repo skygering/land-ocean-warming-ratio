@@ -53,20 +53,20 @@ get_weighted_areas = function(land_frac, path_name, land_area, ocean_area, clean
 #outputs:
 #     annual_temp: as specified above - saved at path_name
 
-get_annual_temp = function(weight_area, path_name, annual_temp, cleanup = TRUE){
+get_annual_temp = function(weight_area, t, path_name, annual_temp, counter, type, cleanup = TRUE){
   assertthat::assert_that(file.exists(weight_area))
   
   if(!file.exists(annual_temp)){
     print("in the assert")
     print("This is the temp file:")
-    print(annual_temp)
+    print(temp)
     
     #file to be created
-    combo <-file.path(path_name, paste0(ensemble_model,'_combo_weight_temp.nc'))  # temp and weighted area parameteres in same netCDF files so weighted mean can be calculated
-    month_temp <- file.path(path_name, paste0(ensemble_model,'_month_temp.nc'))
+    combo <-file.path(path_name, paste0(ensemble_model,'_combo_weight_temp_', type, '_', counter, '.nc'))  # temp and weighted area parameteres in same netCDF files so weighted mean can be calculated
+    month_temp <- file.path(path_name, paste0(ensemble_model,'_month_temp_', type, '_', counter, '.nc'))
     
     #calculates weighted average temperature for each timestep
-    system2(cdo_path, args = c('merge', temp, weight_area, combo), stdout = TRUE, stderr = TRUE)
+    system2(cdo_path, args = c('merge', t, weight_area, combo), stdout = TRUE, stderr = TRUE)
     system2(cdo_path, args = c('-fldmean', combo, month_temp), stdout = TRUE, stderr = TRUE)
     system2(cdo_path, args = c('-a', 'yearmonmean', month_temp, annual_temp), stdout = TRUE, stderr = TRUE) #Might be able to combine on PIC -> seg fault rn
     
@@ -120,9 +120,9 @@ land_ocean_global_temps = function(path_name, cdo_path, ensemble_model, temp, ar
     ocean_temp <- file.path(path_name, paste0(ensemble_model, '_ocean_temp_', counter, '.nc'))
     global_temp <- file.path(path_name, paste0(ensemble_model, '_global_temp_', counter, '.nc'))
     
-    get_annual_temp(land_area, path_name, land_temp, cleanup)
-    get_annual_temp(ocean_area, path_name, ocean_temp, cleanup)
-    get_annual_temp(area, path_name, global_temp, cleanup)
+    get_annual_temp(land_area, t, path_name, land_temp, counter, 'land', cleanup)
+    get_annual_temp(ocean_area, t, path_name, ocean_temp, counter, 'ocean', cleanup)
+    get_annual_temp(area, t, path_name, global_temp, counter, 'global', cleanup)
     
     nc_open(land_temp) %>% ncvar_get("tas") -> land_tas
     nc_open(ocean_temp) %>% ncvar_get("tas") -> ocean_tas
@@ -136,6 +136,7 @@ land_ocean_global_temps = function(path_name, cdo_path, ensemble_model, temp, ar
     
     df_model <- rbind.fill(df_model, temp_frame)
     counter = counter + 1;
+    
     if(cleanup){
       file.remove(land_temp)
       file.remove(ocean_temp)
