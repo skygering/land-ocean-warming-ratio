@@ -59,7 +59,7 @@ for(e in ensembles){
   models_with_data <- get_usable_models(ensemble_data)
   
   #FOR TESTING
-  models_with_data <- models_with_data[12]
+  models_with_data <- models_with_data[11:12]
   
   for(model in models_with_data){
     temp <- get_file_location(ensemble_data, model, 'tas')
@@ -68,12 +68,10 @@ for(e in ensembles){
     
     ensemble_model = paste0(e, '_', model)
     
-    print("about to enter average_temp_cdo.R")
     model_path_name <- file.path(path_name, ensemble_model)  # data for each model and ensemble will have its own folder
     dir.create(model_path_name)
     
     df_model <- land_ocean_global_temps(model_path_name, cdo_path, ensemble_model, temp, area, land_frac, TRUE)
-    print("out of average_temp_")
     df_temps <- rbind.fill(df_temps, df_model)
   }
 }

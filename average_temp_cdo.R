@@ -13,10 +13,6 @@ library(dplyr)
 #     land_area.nc and ocean_area.nc: as specified above - saved at path_name
 
 get_weighted_areas = function(land_frac, path_name, land_area, ocean_area, cleanup = TRUE){
-  print("In get_weighted_areas and here are params:")
-  print(land_frac)
-  print(land_area)
-  print(ocean_area)
   
   nc_open(land_frac) %>% ncvar_get('sftlf') %>% max(na.rm = FALSE) -> max_frac
   
@@ -26,16 +22,13 @@ get_weighted_areas = function(land_frac, path_name, land_area, ocean_area, clean
     land_frac <- land_frac_dec
   }
   
-  print("getting ocean frac")
   ocean_frac <- file.path(path_name, paste0(ensemble_model,'_ocean_frac.nc'))
   system2(cdo_path, args = c('-mulc,-1', '-addc,-1', land_frac, ocean_frac), stdout = TRUE, stderr = TRUE)
   
-  print("calculating weighted areas")
   #calculates weighted area
   system2(cdo_path, args = c('mul', area, land_frac, land_area), stdout = TRUE, stderr = TRUE)
   system2(cdo_path, args = c('mul', area, ocean_frac, ocean_area), stdout = TRUE, stderr = TRUE)
   
-  print("cleanup time")
   if(cleanup){
     file.remove(ocean_frac)
     if(exists('land_frac_dec')){  # if it doesn't exist this is original sftlf data, which we don't want to delete
@@ -57,9 +50,6 @@ get_annual_temp = function(weight_area, t, path_name, annual_temp, counter, type
   assertthat::assert_that(file.exists(weight_area))
   
   if(!file.exists(annual_temp)){
-    print("in the assert")
-    print("This is the temp file:")
-    print(temp)
     
     #file to be created
     combo <-file.path(path_name, paste0(ensemble_model,'_combo_weight_temp_', type, '_', counter, '.nc'))  # temp and weighted area parameteres in same netCDF files so weighted mean can be calculated
@@ -92,16 +82,10 @@ get_annual_temp = function(weight_area, t, path_name, annual_temp, counter, type
 land_ocean_global_temps = function(path_name, cdo_path, ensemble_model, temp, area, land_frac, cleanup = TRUE){
   assertthat::assert_that(file.exists(area))
   assertthat::assert_that(file.exists(land_frac))
-  print("made it through asserts")
   
   land_area <-  file.path(path_name, paste0(ensemble_model, '_land_area.nc'))
   ocean_area <- file.path(path_name, paste0(ensemble_model, '_ocean_area.nc'))
   
-  print("created file names:")
-  print(land_area)
-  print(ocean_area)
-  
-  print("getting weighted areas")
   get_weighted_areas(land_frac, path_name, land_area, ocean_area, cleanup)
 
   
@@ -113,8 +97,6 @@ land_ocean_global_temps = function(path_name, cdo_path, ensemble_model, temp, ar
   
   for (t in temp){
     assertthat::assert_that(file.exists(t))
-    print("in temp loop and here is the temp file:")
-    print(t)
     
     land_temp <- file.path(path_name, paste0(ensemble_model, '_land_temp_', counter, '.nc'))
     ocean_temp <- file.path(path_name, paste0(ensemble_model, '_ocean_temp_', counter, '.nc'))
