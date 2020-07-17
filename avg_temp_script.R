@@ -65,7 +65,9 @@ for(e in ensembles){
     
     ensemble_model = paste0(e, '_', model)
     
+    print("about to enter average_temp_cdo.R")
     model_path_name <- file.path(path_name, ensemble_model)  # data for each model and ensemble will have its own folder
+    print("out of average_temp_cdo.R")
     dir.create(model_path_name)
     
     df_model <- land_ocean_global_temps(model_path_name, cdo_path, ensemble_model, temp, area, land_frac, TRUE)
