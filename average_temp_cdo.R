@@ -57,6 +57,10 @@ get_annual_temp = function(weight_area, path_name, annual_temp, cleanup = TRUE){
   assertthat::assert_that(file.exists(weight_area))
   
   if(!file.exists(annual_temp)){
+    print("in the assert")
+    print("This is the temp file:")
+    print(annual_temp)
+    
     #file to be created
     combo <-file.path(path_name, paste0(ensemble_model,'_combo_weight_temp.nc'))  # temp and weighted area parameteres in same netCDF files so weighted mean can be calculated
     month_temp <- file.path(path_name, paste0(ensemble_model,'_month_temp.nc'))
