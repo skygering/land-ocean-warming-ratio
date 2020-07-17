@@ -1,10 +1,10 @@
 library(plyr)
 
-path_name = '/Users/skylargering/land-ocean-warming-ratio'
-cdo_path = '/usr/local/Cellar/cdo/1.9.8/bin/cdo'
+#path_name = '/Users/skylargering/land-ocean-warming-ratio'
+#cdo_path = '/usr/local/Cellar/cdo/1.9.8/bin/cdo'
 
-#path_name = '/pic/projects/GCAM/Gering/land-ocean-warming-ratio' #Where do we save data to?
-#cdo_path = '/share/apps/netcdf/4.3.2/gcc/4.4.7/bin/cdo'
+path_name = '/pic/projects/GCAM/Gering/land-ocean-warming-ratio' #Where do we save data to?
+cdo_path = '/share/apps/netcdf/4.3.2/gcc/4.4.7/bin/cdo'
 
 source(file.path(path_name, 'average_temp_cdo.R'))  # access to functions to calculate annual temperature
 
