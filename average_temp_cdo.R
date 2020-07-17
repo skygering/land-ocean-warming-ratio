@@ -73,9 +73,6 @@ get_annual_temp = function(weight_area, path_name, annual_temp, cleanup = TRUE){
     if(cleanup){
       file.remove(combo)
       file.remove(month_temp)
-      if(!identical(weight_area, area)){  # don't want to remove area if it is for global temperature
-        file.remove(weight_area)
-      }
     }
   }
 }
@@ -143,6 +140,11 @@ land_ocean_global_temps = function(path_name, cdo_path, ensemble_model, temp, ar
       file.remove(ocean_temp)
       file.remove(global_temp)
     }
+  }
+  
+  if(cleanup){
+    file.remove(land_area)
+    file.remove(ocean_area)
   }
   
   write.csv(df_model,  file.path(path_name, paste0(ensemble_model, '_temp.csv')), row.names = FALSE)
