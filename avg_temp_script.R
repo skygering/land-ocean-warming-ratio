@@ -77,5 +77,5 @@ for(e in ensembles){
 }
 
 # write data from all models and ensembles to .csv at path_name
-write.csv(df_model, file.path(path_name, 'temp.csv'), row.names = FALSE)
+write.csv(df_temps, file.path(path_name, 'temp.csv'), row.names = FALSE)
 
