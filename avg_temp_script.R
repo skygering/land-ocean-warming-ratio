@@ -56,7 +56,7 @@ for(e in ensembles){
   models_with_data <- get_usable_models(ensemble_data)
   
   #FOR TESTING
-  models_with_data <- models_with_data[11:12]
+  models_with_data <- models_with_data[1]
   
   for(model in models_with_data){
     temp <- get_file_location(ensemble_data, model, 'tas')

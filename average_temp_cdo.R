@@ -12,7 +12,7 @@ library(dplyr)
 #outputs:
 #     land_area.nc and ocean_area.nc: as specified above - saved at path_name
 
-get_weighted_areas = function(land_frac, land_area, ocean_area, cleanup = TRUE){
+get_weighted_areas = function(land_frac, path_name, land_area, ocean_area, cleanup = TRUE){
   print("In get_weighted_areas and here are params:")
   print(land_frac)
   print(land_area)
@@ -53,7 +53,7 @@ get_weighted_areas = function(land_frac, land_area, ocean_area, cleanup = TRUE){
 #outputs:
 #     annual_temp: as specified above - saved at path_name
 
-get_annual_temp = function(weight_area, annual_temp, cleanup = TRUE){
+get_annual_temp = function(weight_area, path_name, annual_temp, cleanup = TRUE){
   assertthat::assert_that(file.exists(weight_area))
   
   if(!file.exists(annual_temp)){
@@ -101,7 +101,7 @@ land_ocean_global_temps = function(path_name, cdo_path, ensemble_model, temp, ar
   print(ocean_area)
   
   print("getting weighted areas")
-  get_weighted_areas(land_frac, land_area, ocean_area, cleanup)
+  get_weighted_areas(land_frac, path_name, land_area, ocean_area, cleanup)
 
   
   df_model <- data.frame(Ensemble_Model = character(),
@@ -118,9 +118,9 @@ land_ocean_global_temps = function(path_name, cdo_path, ensemble_model, temp, ar
     ocean_temp <- file.path(path_name, paste0(ensemble_model, '_ocean_temp_', counter, '.nc'))
     global_temp <- file.path(path_name, paste0(ensemble_model, '_global_temp_', counter, '.nc'))
     
-    get_annual_temp(land_area, land_temp, cleanup)
-    get_annual_temp(ocean_area, ocean_temp, cleanup)
-    get_annual_temp(area, global_temp, cleanup)
+    get_annual_temp(land_area, path_name, land_temp, cleanup)
+    get_annual_temp(ocean_area, path_name, ocean_temp, cleanup)
+    get_annual_temp(area, path_name, global_temp, cleanup)
     
     nc_open(land_temp) %>% ncvar_get("tas") -> land_tas
     nc_open(ocean_temp) %>% ncvar_get("tas") -> ocean_tas
