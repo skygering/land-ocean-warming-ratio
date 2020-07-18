@@ -1,8 +1,5 @@
 library(plyr)
 
-#path_name = '/Users/skylargering/land-ocean-warming-ratio'
-#cdo_path = '/usr/local/Cellar/cdo/1.9.8/bin/cdo'
-
 path_name = '/pic/projects/GCAM/Gering/land-ocean-warming-ratio' #Where do we save data to?
 cdo_path = '/share/apps/netcdf/4.3.2/gcc/4.4.7/bin/cdo'
 
@@ -35,9 +32,9 @@ get_file_location = function(ensemble_data, model, var){
                     ensemble_data$variable == var &
                     ensemble_data$grid != 'gr2'),]  # do not want data gridded with 'gr2'
   if (var == 'tas'){
-    model_data <- model_data[c(model_data$domain == 'Amon'),]  # only want monthly data
+    model_data <- model_data[c(model_data$domain == 'Amon'),]  # only want monthly data, not daily data
   }
-  model_data$file #return the list of files
+  model_data$file  # return the list of files
 }
 
 
@@ -59,7 +56,7 @@ for(e in ensembles){
   models_with_data <- get_usable_models(ensemble_data)
   
   for(model in models_with_data){
-    temp <- get_file_location(ensemble_data, model, 'tas')
+    temp <- get_file_location(ensemble_data, model, 'tas')  # could be a vector if there is more than one tas file for a model
     area <- get_file_location(ensemble_data, model, 'areacella')
     land_frac <- get_file_location(ensemble_data, model, 'sftlf')
     
