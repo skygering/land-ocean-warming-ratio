@@ -12,18 +12,17 @@ library(dplyr)
 #outputs:
 #     land_area.nc and ocean_area.nc: as specified above - saved at path_name
 
-get_weighted_areas = function(land_frac, land_area, ocean_area, cleanup = TRUE){
-  assertthat::assert_that(file.exists(land_frac))
-  assertthat::assert_that(file.exists(area))
+get_weighted_areas = function(land_frac, path_name, land_area, ocean_area, cleanup = TRUE){
   
   nc_open(land_frac) %>% ncvar_get('sftlf') %>% max(na.rm = FALSE) -> max_frac
+  
   if(max_frac > 1){
-    land_frac_dec <- file.path(path_name, paste0(model_ensemble,"_land_frac.nc"))
+    land_frac_dec <- file.path(path_name, paste0(ensemble_model,"_land_frac.nc"))
     system2(cdo_path, args = c('divc,100', land_frac, land_frac_dec))
     land_frac <- land_frac_dec
   }
   
-  ocean_frac <- file.path(path_name, paste0(model_ensemble,'_ocean_frac.nc'))
+  ocean_frac <- file.path(path_name, paste0(ensemble_model,'_ocean_frac.nc'))
   system2(cdo_path, args = c('-mulc,-1', '-addc,-1', land_frac, ocean_frac), stdout = TRUE, stderr = TRUE)
   
   #calculates weighted area
@@ -36,7 +35,6 @@ get_weighted_areas = function(land_frac, land_area, ocean_area, cleanup = TRUE){
       file.remove(land_frac)
     }
   }
-  
 }
 
 # get_annual_temp:
@@ -48,23 +46,23 @@ get_weighted_areas = function(land_frac, land_area, ocean_area, cleanup = TRUE){
 #outputs:
 #     annual_temp: as specified above - saved at path_name
 
-get_annual_temp = function(weight_area, annual_temp, cleanup = TRUE){
+get_annual_temp = function(weight_area, t, path_name, annual_temp, counter, type, cleanup = TRUE){
   assertthat::assert_that(file.exists(weight_area))
   
-  #file to be created
-  combo <-file.path(path_name, paste0(model_ensemble,'_combo_weight_temp.nc'))  # temp and weighted area parameteres in same netCDF files so weighted mean can be calculated
-  month_temp <- file.path(path_name, paste0(model_ensemble,'_month_temp.nc'))
-  
-  #calculates weighted average temperature for each timestep
-  system2(cdo_path, args = c('merge', temp, weight_area, combo), stdout = TRUE, stderr = TRUE)
-  system2(cdo_path, args = c('-fldmean', combo, month_temp), stdout = TRUE, stderr = TRUE)
-  system2(cdo_path, args = c('yearmonmean', month_temp, annual_temp), stdout = TRUE, stderr = TRUE) #Might be able to combine on PIC -> seg fault rn
-
-  if(cleanup){
-    file.remove(combo)
-    file.remove(month_temp)
-    if(!identical(weight_area, area)){  # don't want to remove area if it is for global temperature
-      file.remove(weight_area)
+  if(!file.exists(annual_temp)){
+    
+    #file to be created
+    combo <-file.path(path_name, paste0(ensemble_model,'_combo_weight_temp_', type, '_', counter, '.nc'))  # temp and weighted area parameteres in same netCDF files so weighted mean can be calculated
+    month_temp <- file.path(path_name, paste0(ensemble_model,'_month_temp_', type, '_', counter, '.nc'))
+    
+    #calculates weighted average temperature for each timestep
+    system2(cdo_path, args = c('merge', t, weight_area, combo), stdout = TRUE, stderr = TRUE)
+    system2(cdo_path, args = c('-fldmean', combo, month_temp), stdout = TRUE, stderr = TRUE)
+    system2(cdo_path, args = c('-a', 'yearmonmean', month_temp, annual_temp), stdout = TRUE, stderr = TRUE) #Might be able to combine on PIC -> seg fault rn
+    
+    if(cleanup){
+      file.remove(combo)
+      file.remove(month_temp)
     }
   }
 }
@@ -79,22 +77,62 @@ get_annual_temp = function(weight_area, annual_temp, cleanup = TRUE){
 #       area: .nc file location that contains the area of each grid cell 
 #       land_fac: .nc file location that contains the percent of each grid cell that is land
 # Outputs:
-#       Three .nc files (land_temp.nc, ocean_temp.nc, and global_temp.nc) which contain annual average temperatures -
-#       Located at path_name
+#       A data frame of the model's land, ocean, and global average annual temperature data
 
-land_ocean_global_temps = function(path_name, cdo_path, model_ensemble, temp, area, land_frac, cleanup = TRUE){
+land_ocean_global_temps = function(path_name, cdo_path, ensemble_model, temp, area, land_frac, cleanup = TRUE){
+  assertthat::assert_that(file.exists(area))
+  assertthat::assert_that(file.exists(land_frac))
   
-  land_area <-  file.path(path_name, paste0(model_ensemble, '_land_area.nc'))
-  ocean_area <- file.path(path_name, paste0(model_ensemble, '_ocean_area.nc'))
-  get_weighted_areas(land_frac, land_area, ocean_area, cleanup)
+  land_area <-  file.path(path_name, paste0(ensemble_model, '_land_area.nc'))
+  ocean_area <- file.path(path_name, paste0(ensemble_model, '_ocean_area.nc'))
   
-  land_temp <- file.path(path_name, paste0(model_ensemble, '_land_temp.nc'))
-  ocean_temp <- file.path(path_name, paste0(model_ensemble, '_ocean_temp.nc'))
-  global_temp <- file.path(path_name, paste0(model_ensemble, '_global_temp.nc'))
+  get_weighted_areas(land_frac, path_name, land_area, ocean_area, cleanup)
+
   
-  get_annual_temp(land_area, land_temp, cleanup)
-  get_annual_temp(ocean_area, ocean_temp, cleanup)
-  get_annual_temp(area, global_temp, cleanup)
+  df_model <- data.frame(Ensemble_Model = character(),
+                         Data = character(),
+                         Time = integer(),
+                         Temp = double())
+  counter = 1;
+  
+  for (t in temp){
+    assertthat::assert_that(file.exists(t))
+    
+    land_temp <- file.path(path_name, paste0(ensemble_model, '_land_temp_', counter, '.nc'))
+    ocean_temp <- file.path(path_name, paste0(ensemble_model, '_ocean_temp_', counter, '.nc'))
+    global_temp <- file.path(path_name, paste0(ensemble_model, '_global_temp_', counter, '.nc'))
+    
+    get_annual_temp(land_area, t, path_name, land_temp, counter, 'land', cleanup)
+    get_annual_temp(ocean_area, t, path_name, ocean_temp, counter, 'ocean', cleanup)
+    get_annual_temp(area, t, path_name, global_temp, counter, 'global', cleanup)
+    
+    nc_open(land_temp) %>% ncvar_get("tas") -> land_tas
+    nc_open(ocean_temp) %>% ncvar_get("tas") -> ocean_tas
+    nc_open(global_temp) %>% ncvar_get("tas") -> global_tas
+    nc_open(land_temp) %>% ncvar_get("time") -> time
+    
+    temp_frame <- data.frame(Ensemble_Model = rep(ensemble_model, dim(time)),
+                             Data = rep(c("Land", "Ocean", "Global"), each = dim(time)),
+                             Time = rep(time, 3),
+                             Temp = c(land_tas, ocean_tas, global_tas))
+    
+    df_model <- rbind.fill(df_model, temp_frame)
+    counter = counter + 1;
+    
+    if(cleanup){
+      file.remove(land_temp)
+      file.remove(ocean_temp)
+      file.remove(global_temp)
+    }
+  }
+  
+  if(cleanup){
+    file.remove(land_area)
+    file.remove(ocean_area)
+  }
+  
+  write.csv(df_model,  file.path(path_name, paste0(ensemble_model, '_temp.csv')), row.names = FALSE)
+  df_model
 }
 
 
