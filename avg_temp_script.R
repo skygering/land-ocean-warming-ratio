@@ -1,10 +1,10 @@
 library(plyr)
 
-#path_name = '/Users/skylargering/land-ocean-warming-ratio'
-#cdo_path = '/usr/local/Cellar/cdo/1.9.8/bin/cdo'
-
+#inputs
 path_name = '/pic/projects/GCAM/Gering/land-ocean-warming-ratio' #Where do we save data to?
 cdo_path = '/share/apps/netcdf/4.3.2/gcc/4.4.7/bin/cdo'
+ensembles = c('r1i1p1f1')  # ensembles we will loop over
+experiment_type = '1pctCO2'  # experiment type
 
 source(file.path(path_name, 'average_temp_cdo.R'))  # access to functions to calculate annual temperature
 
@@ -13,8 +13,8 @@ source(file.path(path_name, 'average_temp_cdo.R'))  # access to functions to cal
 # inputs:
 #       ensemble: the string name of the ensemble we want data from
 # outputs:
-#       a string list of the names of the models with all of the needed data to calculate average annual temperature
-get_usable_models = function(ensemble_data){
+#       a string vector of the names of the models with all of the needed data to calculate average annual temperature
+get_usable_models <- function(ensemble_data){
   tas_models <- unique(ensemble_data [ensemble_data $variable == 'tas' &
                                         ensemble_data$domain == 'Amon' &
                                         ensemble_data$grid != 'gr2', ]$model) 
@@ -29,15 +29,15 @@ get_usable_models = function(ensemble_data){
 # get_file_location:
 # given a model and a data type get the path to the file within PIC
 # input: data frame of ensemble data
-# output: file path
-get_file_location = function(ensemble_data, model, var){
+# output: vector of file paths
+get_file_location <- function(ensemble_data, model, var){
   model_data <- ensemble_data[c(ensemble_data$model == model & 
                     ensemble_data$variable == var &
                     ensemble_data$grid != 'gr2'),]  # do not want data gridded with 'gr2'
   if (var == 'tas'){
-    model_data <- model_data[c(model_data$domain == 'Amon'),]  # only want monthly data
+    model_data <- model_data[c(model_data$domain == 'Amon'),]  # only want monthly data, not daily data
   }
-  model_data$file #return the list of files
+  model_data$file  # return the list of files
 }
 
 
@@ -45,25 +45,24 @@ get_file_location = function(ensemble_data, model, var){
 
 # Importing the CMIP6 archive 
 archive <- readr::read_csv(url("https://raw.githubusercontent.com/JGCRI/CMIP6/master/cmip6_archive_index.csv"))
-historical_data <- archive[c(archive$experiment == 'historical' & archive$variable %in% c('tas', 'areacella', 'sftlf')),]
+experiment_data <- archive[c(archive$experiment == experiment_type & archive$variable %in% c('tas', 'areacella', 'sftlf')),]
 
 df_temps <- data.frame(Ensemble_Model = character(),
                       Data = character(),
                       Time = integer(),
                       Temp = double())
 
-ensembles = c('r1i1p1f1')  # ensembles we will loop over
 
 for(e in ensembles){
-  ensemble_data <- historical_data[historical_data$ensemble == e, ]
+  ensemble_data <- experiment_data[experiment_data$ensemble == e, ]
   models_with_data <- get_usable_models(ensemble_data)
   
   for(model in models_with_data){
-    temp <- get_file_location(ensemble_data, model, 'tas')
+    temp <- get_file_location(ensemble_data, model, 'tas')  # could be a vector if there is more than one tas file for a model
     area <- get_file_location(ensemble_data, model, 'areacella')
     land_frac <- get_file_location(ensemble_data, model, 'sftlf')
     
-    ensemble_model = paste0(e, '_', model)
+    ensemble_model = paste0(experiment_type, '_', e, '_', model)
     
     model_path_name <- file.path(path_name, ensemble_model)  # data for each model and ensemble will have its own folder
     dir.create(model_path_name)
@@ -74,5 +73,5 @@ for(e in ensembles){
 }
 
 # write data from all models and ensembles to .csv at path_name
-write.csv(df_temps, file.path(path_name, 'temp.csv'), row.names = FALSE)
+write.csv(df_temps, file.path(path_name, paste0(experiment_type, '_temp.csv')), row.names = FALSE)
 

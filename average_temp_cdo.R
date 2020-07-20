@@ -3,16 +3,14 @@ library(ggplot2)
 library(dplyr)
 
 #get_weighted_area:
-#Calculates and saves the fraction of each grid that is land and ocean in decimal form (max 1, min 0) and saves both
+#Calculates and saves the fraction of each grid that is land and ocean in decimal form (max 1, min 0) and saves both as .nc files at the specificed path_name
 #inputs:
 #     land_frac: .nc file location that contains fraction of grid that is land (either in decimal or percent)
 #     land_area: .nc file location that will contain the area of each gris square weighted by the percent of the grid that is land
 #     ocean_frac: .nc file location that will contain the area of each gris square weighted by the percent of the grid that is
 #     cleanup: a boolean value - if true than intermediate files will be deleted - defaults to true
-#outputs:
-#     land_area.nc and ocean_area.nc: as specified above - saved at path_name
 
-get_weighted_areas = function(land_frac, path_name, land_area, ocean_area, cleanup = TRUE){
+get_weighted_areas <- function(land_frac, path_name, land_area, ocean_area, cleanup = TRUE){
   
   nc_open(land_frac) %>% ncvar_get('sftlf') %>% max(na.rm = FALSE) -> max_frac
   
@@ -38,15 +36,16 @@ get_weighted_areas = function(land_frac, path_name, land_area, ocean_area, clean
 }
 
 # get_annual_temp:
-# Calculates the annual temp based on the weighting .nc file passed into the function
+# Calculates the annual temp based on the weighting .nc file passed into the function and saves the annual average temp in a .nc file at path_name
 # inputs: 
 #     weight_area: .nc file location that contains the weighted area of each grid square
+#     t: .nc file name of the temperature file that is being used (necessary due to some models having several tas files)
 #     annual_temp: .nc file location that will contain the weighted average temperature over the data's time steps
+#     counter: int value signifying which tas file we are on for this model (used to make more specific file names since cdo doesn't over write files)
+#     type: string signifying which type of temperature we are calculating (land, ocean, or global), again used to make file names more specific
 #     cleanup: a boolean value - if true than intermediate files will be deleted - defaults to true
-#outputs:
-#     annual_temp: as specified above - saved at path_name
 
-get_annual_temp = function(weight_area, t, path_name, annual_temp, counter, type, cleanup = TRUE){
+get_annual_temp <- function(weight_area, t, path_name, annual_temp, counter, type, cleanup = TRUE){
   assertthat::assert_that(file.exists(weight_area))
   
   if(!file.exists(annual_temp)){
@@ -55,9 +54,9 @@ get_annual_temp = function(weight_area, t, path_name, annual_temp, counter, type
     combo <-file.path(path_name, paste0(ensemble_model,'_combo_weight_temp_', type, '_', counter, '.nc'))  # temp and weighted area parameteres in same netCDF files so weighted mean can be calculated
     month_temp <- file.path(path_name, paste0(ensemble_model,'_month_temp_', type, '_', counter, '.nc'))
     
-    #calculates weighted average temperature for each timestep
+    #calculates weighted average temperature for each timestep and converts monthly data to yearly average
     system2(cdo_path, args = c('merge', t, weight_area, combo), stdout = TRUE, stderr = TRUE)
-    system2(cdo_path, args = c('-fldmean', combo, month_temp), stdout = TRUE, stderr = TRUE)
+    system2(cdo_path, args = c('fldmean', combo, month_temp), stdout = TRUE, stderr = TRUE)
     system2(cdo_path, args = c('-a', 'yearmonmean', month_temp, annual_temp), stdout = TRUE, stderr = TRUE) #Might be able to combine on PIC -> seg fault rn
     
     if(cleanup){
@@ -73,13 +72,14 @@ get_annual_temp = function(weight_area, t, path_name, annual_temp, counter, type
 # Inputs:
 #       path_name: path to a folder where the output .nc files will be stored
 #       cdo_path: path to where the cdo.exe is located on the local computer
-#       temp: .nc file location that contains the monthly temperature data
+#       ensemble_model: string of ensemble and model run to create more specific file names
+#       temp: .nc file location that contains the monthly temperature data (could be a vector of several .nc files depending on model)
 #       area: .nc file location that contains the area of each grid cell 
 #       land_fac: .nc file location that contains the percent of each grid cell that is land
 # Outputs:
 #       A data frame of the model's land, ocean, and global average annual temperature data
 
-land_ocean_global_temps = function(path_name, cdo_path, ensemble_model, temp, area, land_frac, cleanup = TRUE){
+land_ocean_global_temps <- function(path_name, cdo_path, ensemble_model, temp, area, land_frac, cleanup = TRUE){
   assertthat::assert_that(file.exists(area))
   assertthat::assert_that(file.exists(land_frac))
   
@@ -87,14 +87,15 @@ land_ocean_global_temps = function(path_name, cdo_path, ensemble_model, temp, ar
   ocean_area <- file.path(path_name, paste0(ensemble_model, '_ocean_area.nc'))
   
   get_weighted_areas(land_frac, path_name, land_area, ocean_area, cleanup)
-
   
   df_model <- data.frame(Ensemble_Model = character(),
                          Data = character(),
                          Time = integer(),
                          Temp = double())
-  counter = 1;
   
+  counter = 1;  # keeps track of which tas file we are on within temp
+  
+  # loops through all of the .nc tas file if there are more than one for a singular model
   for (t in temp){
     assertthat::assert_that(file.exists(t))
     
@@ -116,6 +117,7 @@ land_ocean_global_temps = function(path_name, cdo_path, ensemble_model, temp, ar
                              Time = rep(time, 3),
                              Temp = c(land_tas, ocean_tas, global_tas))
     
+    # bind each of the tas files for model into one data frame
     df_model <- rbind.fill(df_model, temp_frame)
     counter = counter + 1;
     
@@ -131,6 +133,7 @@ land_ocean_global_temps = function(path_name, cdo_path, ensemble_model, temp, ar
     file.remove(ocean_area)
   }
   
+  # write the data for this model and return the model's data frame
   write.csv(df_model,  file.path(path_name, paste0(ensemble_model, '_temp.csv')), row.names = FALSE)
   df_model
 }
