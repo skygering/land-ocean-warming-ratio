@@ -17,7 +17,9 @@ source(file.path(path_name, 'average_temp_cdo.R'))  # access to functions to cal
 get_usable_models <- function(ensemble_data){
   tas_models <- unique(ensemble_data [ensemble_data $variable == 'tas' &
                                         ensemble_data$domain == 'Amon' &
-                                        ensemble_data$grid != 'gr2', ]$model) 
+                                        ensemble_data$grid != 'gr2' &
+                                        ensemble_data$grid != 'gnout1' &
+                                        ensemble_data$grid != 'gnout2', ]$model) 
   areacella_models <- unique(ensemble_data [ensemble_data$variable == 'areacella' &
                                               ensemble_data$grid != 'gr2', ]$model) 
   sftlf_models <- unique(ensemble_data [ensemble_data $variable == 'sftlf' &
@@ -33,7 +35,9 @@ get_usable_models <- function(ensemble_data){
 get_file_location <- function(ensemble_data, model, var){
   model_data <- ensemble_data[c(ensemble_data$model == model & 
                     ensemble_data$variable == var &
-                    ensemble_data$grid != 'gr2'),]  # do not want data gridded with 'gr2'
+                    ensemble_data$grid != 'gr2' &
+                      ensemble_data$grid != 'gnout1' &
+                      ensemble_data$grid != 'gnout2'),]  # do not want data gridded with 'gr2'
   if (var == 'tas'){
     model_data <- model_data[c(model_data$domain == 'Amon'),]  # only want monthly data, not daily data
   }
