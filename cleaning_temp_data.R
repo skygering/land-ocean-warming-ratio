@@ -5,18 +5,29 @@ library(dplyr)
 upper_bound = 295
 lower_bound = 275
 path_name = 'Temperature Data'
+file_name = 'temp.csv'
 
 # Read in CSV Data
-temp_data <- read.csv(file = file.path(path_name, 'temp.csv'),
+temp_data <- read.csv(file = file.path(path_name, file_name),
                      stringsAsFactors = FALSE)
-
-# Convert time just to year value
-temp_data$Time = round(temp_data$Time/10000)
 
 #split the Ensemble_Model variable into two variables
 temp_data <- separate(temp_data, "Ensemble_Model", 
-                     c("Ensemble", "Model"), "_", 
-                     remove = TRUE)
+                      c("Experiment", "Ensemble", "Model"), "_", 
+                      remove = TRUE)
+
+# Convert time just to year value
+temp_data$Time <- round(temp_data$Time/10000)
+
+temp_data <- temp_data[with(temp_data, order('Model', 'Time'))]
+
+unique_models = unique(temp_data$Model)
+
+for (model in unique_models) {
+  min_year <- min(temp_data$Model == model)
+  temp_data <- (temp_data$Model == model) - min_year
+}
+
 
 # Identify data that falls outside the regular range
 bad_data <- filter(temp_data, Temp > upper_bound | Temp < lower_bound)
