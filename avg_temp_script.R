@@ -57,6 +57,8 @@ for(e in ensembles){
   ensemble_data <- experiment_data[experiment_data$ensemble == e, ]
   models_with_data <- get_usable_models(ensemble_data)
   
+  models_with_data = models_with_data[1]
+  
   for(model in models_with_data){
     temp <- get_file_location(ensemble_data, model, 'tas')  # could be a vector if there is more than one tas file for a model
     area <- get_file_location(ensemble_data, model, 'areacella')
