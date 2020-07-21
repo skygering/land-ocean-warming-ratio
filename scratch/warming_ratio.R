@@ -1,4 +1,24 @@
-#SHOULD I PUT THIS IN THE SAME FILE AS TEMP CALCULATIONS (average_temp_cdo.R?)
+library(plyr)
+
+standard_error <- function(x, n){
+  sd(x)/sqrt(n)
+}
+
+get_warming <- function(temp_data, model, data_type){
+  data <- filter(temp_data, Model == model & Data == data_type)
+  end_range <- max(data$Time) - 30
+  start <- filter(data, Time < 30)
+  end <- filter(data, Time > end_range)
+  warming <- mean(end$Temp) - mean(start$Temp)
+  
+  start_error <-standard_error(start$Temp, nrow(start))
+  end_error <- standard_error(end$Temp, nrow(end))
+  error <- sqrt(start_error^2 + end_error^2)
+  
+  c(warming, error)
+}
+
+
 
 # get_warming_constant:
 # calculates the land-ocean warming constant for each timestep from the first temperature listed in land and ocean respectivly (historical data)
@@ -10,35 +30,33 @@
 #     ratio: .nc file location that will hold land-ocean warming constant for each timestep
 #output: 
 #     land_warming.nc, ocean_warming.nc, and ratio.nc as specified above - saved at path_name
+path_name = 'Temperature Data/1pctCO2 Data'
+file_name = '1pctCO2_cleaned_temp.csv'
 
-get_warming_constant = function(land_temp, ocean_temp, land_warming, ocean_warming, ratio){
-  nc_open(land_temp) %>% ncvar_get("tas") -> land
-  nc_open(ocean_temp) %>% ncvar_get("tas") -> ocean
-  land_base <- land[1]
-  ocean_base <- ocean[1]
+temp_data <- read.csv(file = file.path(path_name, file_name),
+                      stringsAsFactors = FALSE)
+
+ratio_df <- data.frame(Model = character(),
+                       Ratio = double(), 
+                       Error = double())
+
+unique_models = unique(temp_data$Model)
+
+for (model in unique_models){
+  land_warming_err <- get_warming(temp_data, model, 'Land')
+  ocean_warming_err <- get_warming(temp_data, model, 'Ocean')
   
-  land_warming <- land - land_base
-  ocean_warming <- ocean - ocean_base
-  warming_ratio <- land_warming/ocean_warming
+  ratio <- land_warming_err[1]/ocean_warming_err[1]
+  
+  error <- ratio * sqrt((land_warming_err[2]/land_warming_err[1])^2 +
+                  (ocean_warming_err[2]/ocean_warming_err[1])^2)
+  
+  model_df <- data.frame(Model = model,
+             Ratio = ratio, 
+             Error = error)
+  
+  ratio_df <- rbind.fill(ratio_df, model_df)
 }
 
-
-
-#getting variables
-nc_open(land_temp) %>% ncvar_get("tas") -> land_tas
-nc_open(ocean_temp) %>% ncvar_get("tas") -> ocean_tas
-nc_open(global_temp) %>% ncvar_get("tas") -> global_tas
-
-nc_open(land_temp) %>% ncvar_get("time") %>% as.Date('1850-01-01') -> time
-
-#make data frame (same code as above in R section)
-temp_frame <- data.frame(Data = rep(c("Land", "Ocean", "Global"), each = dim(time)),
-                         Time = rep(time, 3),
-                         Temp = c(land_tas, ocean_tas, global_tas))
-
-#graphing
-ggplot(temp_frame, aes(x = Time, y = Temp, group = Data)) + geom_line(aes(linetype=Data, color=Data))+
-  ggtitle("Average Surface Temperature") + 
-  theme(plot.title = element_text(hjust = 0.5)) + xlab("Time (year)") + ylab("Temp (K)") 
-
+ggplot(ratio_df) + geom_boxplot()
 
