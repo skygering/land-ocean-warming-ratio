@@ -1,0 +1,84 @@
+---
+title: "Land-Ocean Warming Ratio"
+author: "Skylar Gering"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(ggplot2)
+library(tidyr)
+library(dplyr)
+```
+
+## Background
+
+# Scientific Theory
+
+ADD IN WHY WE CARE WHOOP
+
+  Direct observations and climate models have shown that the air over the land warms faster than the air over the ocean in climate change scenarios. The ratio of warming over land to warming over ocean is called the land-ocean warming constant. An initial explanation for this ratio was the large thermal inertia of the ocean in comparison to that of the land. However, it was proven that the ocean's large heat capacity was not the primary cause of the land-ocean warming constant since it was still present in climate models with a slab ocean (i.e. the ocean was already in a state of thermal equilibrium), although it is a contributing factor.
+  
+  The land-ocean warming constant is driven by earth's surface energy budget. Ignoring clouds, equally powerful shortwave radiation falls on both the land and the ocean. However, much of the radiation that falls on the ocean causes evaporation rather than warming of the ocean or the air above it. This latent heat flux is in direct contrast to the sensible heat flux that occurs over the land. Due to the lack of moisture in the soil, shortwave radiation heats the land, and the heat is then released into the air above it. Additionally, the warming ratio is a phenomenon seen in global warming scenarios and the increasing CO~2~ in these scenarios also leads to decreased stomatal conductance in plants, which further decreases evaporation over land.
+  
+  Further contributing to this feedback loop, the increased evaporation over the ocean causes a lower lifted condensation level (LCL) and thus an increase in cloud cover, which blocks incoming shortwave radiation. Additionally, the difference in LCL over ocean versus land affects the lapse rate of air parcels over the land and ocean, which is theorized to further contribute to the occurrence of the warming ratio. 
+
+## Modeling Background
+  
+  The land-ocean warming ratio can be observed in results of major earth system models. It arises naturally from the governing equations that climate models are based off of due to the processes explained above. However, it is not always integrated into simple climate models. Simple climate models [VALUE OF SIMPLE CLIMATE MODELS] The point of this project was to add the parameterization of the land-ocean warming constant to Hector.
+  
+```{r loading_data, echo=FALSE, cache = TRUE}
+path_name = 'C:/Users/geri363/OneDrive - PNNL/Documents/Temperature Data/1pctCO2 Data'
+temp_file_name = 'cleaned_1pctCO2_temp.csv'
+ratio_file_name = 'ratio_cleaned_1pctCO2_temp.csv'
+
+temp_data <- read.csv(file = file.path(path_name, temp_file_name),
+                      stringsAsFactors = FALSE)
+
+ratio_data <- read.csv(file = file.path(path_name, ratio_file_name), stringsAsFactors = FALSE)
+```
+
+
+```{r temperature, echo=FALSE}
+ggplot(temp_data, aes(x=Time, y=Temp, group = Model)) + 
+  geom_line(aes(color = Model)) +
+  facet_grid(cols = vars(Data)) +
+  ggtitle("Annual Average Temperature from CMIP6 Data", subtitle = 
+            expression('1% CO'[2]*' Scenario and r1i1p1f1 Ensemble')) +
+  xlab("Time (years)") + ylab("Temperature (K)") +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+```{r ratio_over_time, echo=FALSE}
+ggplot(ratio_data, aes(x=Year, y=Ratio))+ 
+  geom_smooth(method='lm', formula= y~x, se = FALSE, color = "black") +
+ geom_point(aes(color = Model)) + ggtitle("Land-Ocean Warming Ratio over Time",
+                                          subtitle = expression('1% CO'[2]*' Scenario and r1i1p1f1 Ensemble')) +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  facet_wrap(vars(Model)) + theme(legend.position="none")
+```
+
+```{r ratio_boxplot_all, echo=FALSE}
+summary(ratio_data)
+ggplot(ratio_data, aes(x="", y=Ratio)) +
+  geom_boxplot() +
+  geom_jitter(aes(color = Model))
+```
+
+```{r ratio_boxplot, echo=FALSE}
+final_ratio <- filter(ratio_data, Year == 135)
+summary(final_ratio)
+ggplot(final_ratio, aes(x="", y=Ratio)) +
+  geom_boxplot() +
+  geom_jitter(aes(color = Model))
+```
+
+```{r bar_plot, echo=FALSE}
+
+ggplot(final_ratio, aes(x = Model, y = Ratio)) +
+  geom_bar(stat="identity", aes(color = Model)) + 
+  coord_flip() + theme(legend.position="none") + 
+  geom_errorbar(aes(x = Model, ymin = Ratio - Error, 
+                    ymax = Ratio + Error, color = Model))
+```
+
