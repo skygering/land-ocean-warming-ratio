@@ -1,6 +1,7 @@
 library(ggplot2)
 library(tidyr)
 library(dplyr)
+library(here)
 
 # clean_csv_time:
 # Cleans CSV time by making it into year format and if ideal run making the
@@ -70,7 +71,7 @@ upper_temp = 300
 lower_temp = 270
 upper_year = 149  # minimum number of years needed - count from 0
 ensemble = 'r1i1p1f1'
-path_name = 'Temperature Data/1pctCO2 Data'
+path_name = here()
 file_name = '1pctCO2_temp.csv'
 
 # Read in CSV Data

@@ -1,4 +1,7 @@
 .DS_Store
 *.nc
 *.csv
+!1pctCO2_temp.csv
+!cleaned_1pctCO2_temp.csv
+!ratio_cleaned_1pctCO2_temp.csv
 *.png

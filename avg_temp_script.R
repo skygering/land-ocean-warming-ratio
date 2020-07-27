@@ -1,7 +1,8 @@
 library(plyr)
+library(here)
 
 #inputs
-path_name = '/pic/projects/GCAM/Gering/land-ocean-warming-ratio' #Where do we save data to?
+path_name = here()
 cdo_path = '/share/apps/netcdf/4.3.2/gcc/4.4.7/bin/cdo'
 ensembles = c('r1i1p1f1')  # ensembles we will loop over
 experiment_type = '1pctCO2'  # experiment type

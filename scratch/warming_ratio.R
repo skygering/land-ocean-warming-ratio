@@ -1,4 +1,5 @@
 library(plyr)
+library(here)
 
 # standard error:
 # returns the standard error
@@ -47,7 +48,7 @@ get_warming <- function(temp1, temp2, error = FALSE){
 
 ### MAIN ###
 
-path_name = 'Temperature Data/1pctCO2 Data'
+path_name = here()
 file_name = 'cleaned_1pctCO2_temp.csv'
 
 temp_data <- read.csv(file = file.path(path_name, file_name),
