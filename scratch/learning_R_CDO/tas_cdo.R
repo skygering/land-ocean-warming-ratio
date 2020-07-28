@@ -63,3 +63,30 @@ uw_mean_tas_arr <- array(uw_mean_tas, dim = 94) #w_tas has dimension of 94
 
 identical(uw_mean_tas_arr, tas_w) #returns FASLE
 all.equal(uw_mean_tas_arr, tas_w)
+
+tm <- round(tm/10000)
+tm_w <- round(tm_w/10000)
+
+#making the lines on the same graph
+df2 <- data.frame(Data = rep(c("Weighted", "Unweighted"), each=94), 
+                  Time = c(tm_w, tm), 
+                  Temp = c(tas_w, uw_mean_tas))
+
+ggplot(df2, aes(x = Time, y = Temp, group = Data)) + geom_line(aes(linetype=Data, color=Data))+
+  geom_point(aes(shape=Data, color=Data)) + ggtitle("Annual Average Surface Temperature Over Land") + 
+  theme(plot.title = element_text(hjust = 0.5)) + xlab("Time (year)") + ylab("Temp (K)")
+
+#calling CDO using R
+cdo_path = '../../usr/local/Cellar/cdo/1.9.8/bin/cdo'
+input_file <- 'Documents/land-ocean-warming-ratio/scratch/tas_annual_ipsl-cm5a-lr_rcp8p5_xxx_2006-2099.nc'
+output_file <- 'Documents/land-ocean-warming-ratio/scratch/r_tas_annual_mean.nc'
+system(paste(cdo_path, ' fldmean ', input_file, " ", output_file, sep = ""))
+
+
+r_w_mean_tas <- nc_open(output_file)
+r_tm_w = ncvar_get(r_w_mean_tas, "time")
+r_tas_w = ncvar_get(r_w_mean_tas, "tas")
+
+#checking if this is the same as when I called it in terminal
+identical(r_tas_w, tas_w) #returns TRUE
+all.equal(r_tas_w, tas_w) #returns TRUE
