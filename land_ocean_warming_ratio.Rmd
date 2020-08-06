@@ -2,7 +2,7 @@
 title: "Land-Ocean Warming Ratio"
 author: "Skylar Gering"
 output:
-   pdf_document
+   html_document
    
 ---
 
@@ -11,6 +11,8 @@ knitr::opts_chunk$set(echo = TRUE)
 library(ggplot2)
 library(tidyr)
 library(dplyr)
+
+theme_set(theme_minimal())
 ```
 
 ## Background
@@ -52,8 +54,8 @@ The R script developed to calculate the warming ratio averages the annual land a
 
 ## Results
 
-```{r loading_data, echo=FALSE, cache = TRUE}
-path_name = 'C:/Users/geri363/OneDrive - PNNL/Documents/Temperature Data/1pctCO2 Data'
+```{r loading_data, echo=FALSE, cache = FALSE}
+path_name = 'C:/land-ocean-warming-ratio'
 temp_file_name = 'cleaned_1pctCO2_temp.csv'
 ratio_file_name = 'ratio_cleaned_1pctCO2_temp.csv'
 
@@ -105,6 +107,7 @@ Since we are using all of the data, we determine that the median of all of our d
 
 ```{r ratio_boxplot_all, echo=FALSE, fig.cap= "Land-ocean warming ratio for all models over all time scales. Shows that the median value of the warming ratio is 1.591, which is the value that was used in the parameterization of Hector."}
 summary(ratio_data)
+sd(ratio_data$Ratio)
 ggplot(ratio_data, aes(x="", y=Ratio)) +
   geom_boxplot() +
   geom_jitter(aes(color = Model)) +
