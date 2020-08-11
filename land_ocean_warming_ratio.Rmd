@@ -11,6 +11,9 @@ knitr::opts_chunk$set(echo = TRUE)
 library(ggplot2)
 library(tidyr)
 library(dplyr)
+library(plyr)
+library(tidyverse)
+library(hector)
 
 theme_set(theme_minimal())
 ```
@@ -19,43 +22,41 @@ theme_set(theme_minimal())
 
 ### Scientific Theory
 
-  Direct observations and climate models show that the air over the land warms faster than the air over the ocean in climate change scenarios. The ratio of warming over land to warming over ocean is called the land-ocean warming constant. An initial explanation for this ratio was the large thermal inertia of the ocean in comparison to that of the land. However, it was proven that the ocean's large heat capacity was not the primary cause of the land-ocean warming constant since it was still present in climate models with a slab ocean (i.e. the ocean was already in a state of thermal equilibrium), although it is a contributing factor.
+|   Direct observations and climate models show that the air over the land warms faster than the air over the ocean in climate change scenarios. The ratio of warming over land to warming over ocean is called the land-ocean warming constant. An initial explanation for this ratio was the large thermal inertia of the ocean in comparison to that of the land. However, it was proven that the ocean's large heat capacity was not the primary cause of the land-ocean warming constant since it was still present in climate models with a slab ocean (i.e. the ocean was already in a state of thermal equilibrium), although it is a contributing factor.
   
-  Rather, the land-ocean warming constant is driven by earth's surface energy budget. Ignoring clouds, equally powerful shortwave radiation falls on both the land and the ocean. However, much of the radiation that falls on the ocean causes evaporation rather than warming of the ocean or the air above it. This latent heat flux is in direct contrast to the sensible heat flux that occurs over the land. Due to the lack of moisture in the soil, shortwave radiation heats the land, and the heat is then released into the air above it. Additionally, the increased atmospheric CO~2~ in global warming scenarios leads to decreased stomatal conductance in plants, which further decreases evaporation over land.
+|   Rather, the land-ocean warming constant is driven by earth's surface energy budget. Ignoring clouds, equally powerful shortwave radiation falls on both the land and the ocean. However, much of the radiation that falls on the ocean causes evaporation rather than warming of the ocean or the air above it. This latent heat flux is in direct contrast to the sensible heat flux that occurs over the land. Due to the lack of moisture in the soil, shortwave radiation heats the land, and the heat is then released into the air above it. Additionally, the increased atmospheric CO~2~ in global warming scenarios leads to decreased stomatal conductance in plants, which further decreases evaporation over land.
   
-  Further contributing to this feedback loop, the increased evaporation over the ocean causes a lower lifted condensation level (LCL) and thus an increase in cloud cover, which blocks incoming shortwave radiation. Additionally, the difference in LCL over ocean versus land affects the lapse rate of air parcels over the land and ocean, which is theorized to further contribute to the occurrence of the warming ratio. 
+|   Further contributing to this feedback loop, the increased evaporation over the ocean causes a lower lifted condensation level (LCL) and thus an increase in cloud cover, which blocks incoming shortwave radiation. Additionally, the difference in LCL over ocean versus land affects the lapse rate of air parcels over the land and ocean, which is theorized to further contribute to the occurrence of the warming ratio. 
   
   [WOULD LIKE PAPER FROM KALYN ABOUT WARMING RATIO DECREASING OVER TIME?]
   
-  Understanding the land-ocean warming constant is important as humans live on land. Thus being able to predict and understand the increased rate of warming that human settlements will undergo is important in planning for climate mitigation and resiliency. Integrating the land-ocean warming constant into climate models allows scientists to more accurately predict future warming around the globe.
+|   Understanding the land-ocean warming constant is important as humans live on land. Thus being able to predict and understand the increased rate of warming that human settlements will undergo is important in planning for climate mitigation and resiliency. Integrating the land-ocean warming constant into climate models allows scientists to more accurately predict future warming around the globe.
 
 ### Modeling Background
   
-  In order to predict the state of the climate in the future, a range of climate models are used, with the most complex being fully coupled earth system models (ESMs), which use scientific governing equations to calculate the state of the land, ocean, and atmosphere. The earth is split into a large grid and calculations are carried out for all of the factors within each grid cell.  All of these calculations make ESMs are very computationally expensive and therefore they cannot be run for a large range of climate scenarios [@Hector]. Simple climate models (SCMs) were developed to fill this gap as they only preform vital calculations and have a lower spacial and temporal resolution. SCMs calculate singular values globally rather than within grid cells and can incorporate variable values that emerge from ESMs to replace complex calculations with a constant. When paramaterized with values from ESMs, SCMs can be used to emulate more complex models, allowing scientists to run a large range of emissions scenarios, and thus gain a greater understanding of potential futures (Meinshausen, 2007). SCMs can also be used to investigate particular subsets of climate systems by varying inputs over numerous runs in factor separation analysis. Since SCMs offer numerous research benefits for little computational cost, it is vital to make them as accurate as possible without increasing the computational complexity. 
+|   In order to predict the state of the climate in the future, a range of climate models are used, with the most complex being fully coupled earth system models (ESMs), which use scientific governing equations to calculate the state of the land, ocean, and atmosphere. The earth is split into a large grid and calculations are carried out for all of the factors within each grid cell.  All of these calculations make ESMs are very computationally expensive and therefore they cannot be run for a large range of climate scenarios [@Hector]. Simple climate models (SCMs) were developed to fill this gap as they only preform vital calculations and have a lower spacial and temporal resolution. SCMs calculate singular values globally rather than within grid cells and can incorporate variable values that emerge from ESMs to replace complex calculations with a constant. When paramaterized with values from ESMs, SCMs can be used to emulate more complex models, allowing scientists to run a large range of emissions scenarios, and thus gain a greater understanding of potential futures (Meinshausen, 2007). SCMs can also be used to investigate particular subsets of climate systems by varying inputs over numerous runs in factor separation analysis. Since SCMs offer numerous research benefits for little computational cost, it is vital to make them as accurate as possible without increasing the computational complexity. 
   
-  The Joint Global Change Institute, a joint research facility between Pacific Northwest National Laboratory and University of Maryland, College Park, developed the simple climate carbon-cycle model Hector in the period between 2010-2015. Hector is an open-source, object-oriented model designed to be easy to expand and couple with more complex climate models such as GCAM, as well as acting as a stand alone model that can produce transparent, reproducible data (Hartin, 2014). Hector is composed of several distinct sub-models, including land and ocean, melded together with a coupler that transmits data between the three distinct components. In previous iterations of Hector, the land-ocean warming ratio was not parameterized and integrated between all sections of the model, which was the aim of this research project. 
+|   The Joint Global Change Institute, a joint research facility between Pacific Northwest National Laboratory and University of Maryland, College Park, developed the simple climate carbon-cycle model Hector in the period between 2010-2015. Hector is an open-source, object-oriented model designed to be easy to expand and couple with more complex climate models such as GCAM, as well as acting as a stand alone model that can produce transparent, reproducible data (Hartin, 2014). Hector is composed of several distinct sub-models, including land and ocean, melded together with a coupler that transmits data between the three distinct components. In previous iterations of Hector, the land-ocean warming ratio was not parameterized and integrated between all sections of the model, which was the aim of this research project. 
   
 ## Methods
 
 ### Part 1
-See Appendix A for information on code availability and function.
+|   See Appendix A for information on code availability and function.
 
-The first step of this project was to calculate a reasonable parameterization for the land-ocean warming constant.
+|   The first step of this project was to calculate a reasonable parameterization for the land-ocean warming constant. The Coupled Model Intercomparison Project's CMIP6 data set was used, which contains data from various climate change scenarios run on the newest earth system models from around the globe. Specifically, data from one-percent CO~2~ runs was selected, as these runs represent an idealized climate change scenario with CO~2~ levels increasing from pre-industrial levels by 1% per year until they double and are then held constant. Since this type of experiment has consistently changing input forces, it provides very clean data. Additionally, the runs are focused on CO~2~ forcing without other confounding factors such as aerosols. Since CO~2~ forcing is very well understood, the data is easily interpretable and allows for simpler calculations. Since the land-ocean-warming constant is an emergent property of the system of equations controlling the various models, it is important to have clear data so not to confound the values. 
 
-The Coupled Model Intercomparison Project's CMIP6 data set was used, which contains data from various climate change scenarios run on the newest earth system models from around the globe. Specifically, data from one-percent CO~2~ runs was selected, as these runs represent an idealized climate change scenario with CO~2~ levels increasing from pre-industrial levels by 1% per year until they double and are then held constant. Since this type of experiment has consistently changing input forces, it provides very clean data. Additionally, the runs are focused on CO~2~ forcing without other confounding factors such as aerosols. Since CO~2~ forcing is very well understood, the data is easily interpretable and allows for simpler calculations. Since the land-ocean-warming constant is an emergent property of the system of equations controlling the various models, it is important to have clear data so not to confound the values. 
+|   Additionally, only data from ensemble 'r1i1p1f1' was used. Different ensembles represent different starting conditions for each model run. Each ensemble has a specific realization index, initialization index, physics index, and forcing index. A choice of 1 for each of these indexes represents very standard setup and conditions for the run. Further limiting the available data, calculating the land-ocean warming constant requires temperature data as well as a land map made with grid area data and data representing the fractional component of each grid taken up by land. Using all of these criteria, the following 18 models were selected to analyze: ACCESS-CM2, ACCESS-ESM1-5, BCC-ESM1, CanESM5, CESM2, CESM2-WACCM, E3SM-1-0, GFDL-CM4, INM-CM4-8, INM-CM5-0, IPSL-CM6A-LR, MIROC6, MPI-ESM1-2-LR, MRI-ESM2-0, NorCPM1, NorESM2-LM, NorESM2-MM, SAM0-UNICON.
 
-Additionally, only data from ensemble 'r1i1p1f1' was used. Different ensembles represent different starting conditions for each model run. Each ensemble has a specific realization index, initialization index, physics index, and forcing index. A choice of 1 for each of these indexes represents very standard setup and conditions for the run. Further limiting the available data, calculating the land-ocean warming constant requires temperature data as well as a land map made with grid area data and data representing the fractional component of each grid taken up by land. Using all of these criteria, the following 18 models were selected to analyze: ACCESS-CM2, ACCESS-ESM1-5, BCC-ESM1, CanESM5, CESM2, CESM2-WACCM, E3SM-1-0, GFDL-CM4, INM-CM4-8, INM-CM5-0, IPSL-CM6A-LR, MIROC6, MPI-ESM1-2-LR, MRI-ESM2-0, NorCPM1, NorESM2-LM, NorESM2-MM, SAM0-UNICON.
+|   Each of these models has temperature data, grid area data, and fractional area data as described above in netCDF files. The average annual global, land, and ocean temperatures were calculated using a script leveraging Climate Data Operator (CDO), a collection of command line operators specialized to work on climate data. The script was run on PNNL's supercomputer PIC. The script output a CSV file containing the temperatures organized by ensemble, model, data type (land, ocean, or global), and time step. 
 
-Each of these models has temperature data, grid area data, and fractional area data as described above in netCDF files. The average annual global, land, and ocean temperatures were calculated using a script leveraging Climate Data Operator (CDO), a collection of command line operators specialized to work on climate data. The script was run on PNNL's supercomputer PIC. The script output a CSV file containing the temperatures organized by ensemble, model, data type (land, ocean, or global), and time step. 
+|   This output data was then cleaned with an R script on a local machine that removed data that was outside of the plausible temperature range or did not run for the minimum number of years needed, in this case 150 years, and then output a cleaned version of the CSV file. This cleaned data was then used to determine the warming ratio over time.
 
-This output data was then cleaned with an R script on a local machine that removed data that was outside of the plausible temperature range or did not run for the minimum number of years needed, in this case 150 years, and then output a cleaned version of the CSV file. This cleaned data was then used to determine the warming ratio over time.
-
-The R script developed to calculate the warming ratio averages the annual land and ocean temperature data sets over 5 distinct 30 year periods for each model. Then, using the first 30 year period as a baseline, the warming for each subsequent time period is calculated for both land and ocean. Finally, the corresponding land and ocean warming for each model and time step are compared to determine the warming ratio. This final data is also output in CSV format to the local machine. 
+|   The R script developed to calculate the warming ratio averages the annual land and ocean temperature data sets over 5 distinct 30 year periods for each model. Then, using the first 30 year period as a baseline, the warming for each subsequent time period is calculated for both land and ocean. Finally, the corresponding land and ocean warming for each model and time step are compared to determine the warming ratio. This final data is also output in CSV format to the local machine. 
 
 ## Results
 
 ```{r loading_data, echo=FALSE, cache = FALSE}
-path_name = 'C:/land-ocean-warming-ratio'
+path_name = '../land-ocean-warming-ratio'
 temp_file_name = 'cleaned_1pctCO2_temp.csv'
 ratio_file_name = 'ratio_cleaned_1pctCO2_temp.csv'
 
@@ -65,7 +66,7 @@ temp_data <- read.csv(file = file.path(path_name, temp_file_name),
 ratio_data <- read.csv(file = file.path(path_name, ratio_file_name), stringsAsFactors = FALSE)
 ```
 
-The land, ocean, and global temperature for the 17 models above over a one-percent CO~2~ run are shown below. From the graphs below, it is clear that the land temperature is raising at a faster rate than the ocean temperature, suggesting a land-ocean warming constant greater than one.
+|   The land, ocean, and global temperature for the 17 models above over a one-percent CO~2~ run are shown below. From the graphs below, it is clear that the land temperature is raising at a faster rate than the ocean temperature, suggesting a land-ocean warming constant greater than one.
 
 ```{r temperature, echo=FALSE, fig.cap= "Data from CMIP6 1% CO~2~ runs in ensemble r1i1f1p1 showing the absolute temperature for land, ocean, and global temperature over 150 year period. Note the greater temperature increase over land than over ocean which suggests a land-ocean warming ratio greater than one. " }
 ggplot(temp_data, aes(x=Time, y=Temp, group = Model)) + 
@@ -78,7 +79,7 @@ ggplot(temp_data, aes(x=Time, y=Temp, group = Model)) +
         plot.subtitle = element_text(hjust = 0.5))
 ```
 
-Using the temperature data above, the land-ocean warming ratio was calculated for each model. As shown below, the ratio stays relatively constant or decreases slightly over time for most models as previous studies have shown.
+|   Using the temperature data above, the land-ocean warming ratio was calculated for each model. As shown below, the ratio stays relatively constant or decreases slightly over time for most models as previous studies have shown.
 
 ```{r ratio_over_time, echo=FALSE, fig.cap = "Land-ocean warming ratio over 150 year time period for all CMIP6 models used. Most models show that the ratio is near constant over time, or slightly decreasing, which is supported by previous literature."}
 ggplot(ratio_data, aes(x=Year, y=Ratio))+ 
@@ -91,7 +92,7 @@ ggplot(ratio_data, aes(x=Year, y=Ratio))+
   facet_wrap(vars(Model))
 ```
 
-Breaking the land-ocean warming data into time periods of 30 years shows that the land-ocean warming ratio decreases slightly over time on average. Since Hector generally only runs from 2015 to 2100, a time period of 75 years, we will use the average of all of the data. Since this data shows that the ratio has different long term and short term effects, we want to use the value that most closely matches the environment the it will be parameterizing. Since the time period of a Hector run is 75 years, we will use all of the data so that it is averaged at around half of the time.
+|   Breaking the land-ocean warming data into time periods of 30 years shows that the land-ocean warming ratio decreases slightly over time on average. Since Hector generally only runs from 2015 to 2100, a time period of 75 years, we will use the average of all of the data. Since this data shows that the ratio has different long term and short term effects, we want to use the value that most closely matches the environment the it will be parameterizing. Since the time period of a Hector run is 75 years, we will use all of the data so that it is averaged at around half of the time.
 
 ```{r boxplot_time, echo=FALSE, fig.cap = "Land-Ocean warming ratio for all models seperated by time period. Note that the ratio decreases slightly over the 150 year timescale."}
 ggplot(ratio_data, aes(x=Year, y=Ratio, group = Year)) +
@@ -103,7 +104,7 @@ ggplot(ratio_data, aes(x=Year, y=Ratio, group = Year)) +
         plot.subtitle = element_text(hjust = 0.5), legend.position="none")
 ```
 
-Since we are using all of the data, we determine that the median of all of our data is 1.591 and thus this is the value we will use for parameterizing the land-ocean warming ratio. 
+|   Since we are using all of the data, we determine that the median of all of our data is 1.591 and thus this is the value we will use for parameterizing the land-ocean warming ratio. 
 
 ```{r ratio_boxplot_all, echo=FALSE, fig.cap= "Land-ocean warming ratio for all models over all time scales. Shows that the median value of the warming ratio is 1.591, which is the value that was used in the parameterization of Hector."}
 summary(ratio_data)
@@ -118,9 +119,222 @@ ggplot(ratio_data, aes(x="", y=Ratio)) +
 ```
 
 
-International RCP SSP usually run to 2100 from 2010 or 2015! 
-WHAT TO CALL IT WHEN WE ONLY USE LAST VALUES/WHY SHOULD WE JUST USE LAST VALUES?
+```{r setup for hector changes plot, echo = FALSE}
+cleanData <- function(full_data, var){
+  var_df <- data.frame(year = integer(), run_name = character(), variable = character(), value = double(), units = character(), type = character(), title = character())
+  
+  for(i in 1:length(full_data)){
+    data <- full_data[[i]]
+    data %>% filter(variable == var & spinup == 0) %>% subset(select = -c(component, spinup)) %>% unite(title, c(variable, units), sep = "-", remove = FALSE) -> data
+    var_df <- rbind(var_df, data)
+  }
+  var_df
+}
 
+bindDataFrames <- function(final_df, frames_to_bind){
+  for(frame in frames_to_bind){
+    final_df <- rbind(final_df, frame)
+  }
+  final_df
+}
+
+hector_path_name <- file.path(path_name, 'hector_data')
+RCPs<- c('rcp26', 'rcp45', 'rcp60', 'rcp85')
+
+
+all_df <- data.frame(year = integer(), run_name = character(), variable = character(), variable = character(), value = double(), units = character(), type = character(), title = character())
+
+
+for(rcp in RCPs){
+  read.csv(file = file.path(hector_path_name, paste0('master_outputstream_', rcp, '.csv')), skip=1, stringsAsFactors = FALSE) %>%
+      cbind(data.frame(type = 'No Downstream Changes - Emergent Ratio')) -> master
+  read.csv(file = file.path(hector_path_name, paste0('emergent_outputstream_', rcp, '.csv')), skip=1, stringsAsFactors = FALSE) %>%
+      cbind(data.frame(type = 'Downstream Changes - Emergent Ratio')) -> downstream_emergent
+  read.csv(file = file.path(hector_path_name, paste0('constrain_outputstream_', rcp, '.csv')), skip=1,stringsAsFactors = FALSE) %>%
+      cbind(data.frame(type = 'Downstream Changes - Ratio = 1.591')) -> downstream_constrained
+
+  all_data <- list(master, downstream_emergent, downstream_constrained)
+  ca_data <- cleanData(all_data, 'Ca')
+  tgav_data <- cleanData(all_data, 'Tgav')
+  fco2_data <- cleanData(all_data, 'FCO2')
+  ftot_data <- cleanData(all_data, 'Ftot')
+  all_df <- bindDataFrames(all_df, list(ca_data, tgav_data, fco2_data, ftot_data))
+}
+
+all_df$type <- factor(all_df$type, c('No Downstream Changes - Emergent Ratio', 'Downstream Changes - Emergent Ratio', 'Downstream Changes - Ratio = 1.591'))
+```
+
+```{r All Hector Change Graph, echo = FALSE}
+ggplot(all_df, aes(x=year, y=value)) + geom_line(aes(color = type)) + facet_grid(title ~ run_name, scales =  "free_y") +
+  ggtitle('Effects of Downstream Changes and Warming Ratio on Hector Results for 4 Warming Scenarios',
+          subtitle = expression('Effects on Ambient CO'[2]*' Concentration (Ca),
+                                Forcing due to CO'[2]*' (FCO2), Total Forcing (Ftot), and Average Global Temperature (Tgav)'))+
+  theme(legend.position="bottom",
+      axis.text.x = element_text(angle = 45, vjust = 1.0, hjust = 1.0),
+      legend.title=element_blank(),
+      plot.title = element_text(hjust = 0.5))
+```
+
+```{r Ca Hector Change Graph, echo = FALSE}
+  ggplot(filter(all_df, variable == 'Ca'), aes(x=year, y=value)) + geom_line(aes(color = type)) + facet_grid(~ run_name) +
+  ggtitle('Effects of Downstream Changes and Warming Ratio on Hector Results for Ambient CO2',)+
+  theme(legend.position="bottom",
+      axis.text.x = element_text(angle = 45, vjust = 1.0, hjust = 1.0),
+      legend.title=element_blank(),
+      plot.title = element_text(hjust = 0.5))
+```
+
+```{r Tgav Hector Change Graph, echo = FALSE}
+  ggplot(filter(all_df, variable == 'Tgav'), aes(x=year, y=value)) + geom_line(aes(color = type)) + facet_grid(~ run_name) +
+  ggtitle('Effects of Downstream Changes and Warming Ratio on Hector Results for Global Temperature',)+
+  theme(legend.position="bottom",
+      axis.text.x = element_text(angle = 45, vjust = 1.0, hjust = 1.0),
+      legend.title=element_blank(),
+      plot.title = element_text(hjust = 0.5))
+```
+
+```{r FCO2 Hector Change Graph, echo = FALSE}
+ggplot(filter(all_df, variable == 'FCO2'), aes(x=year, y=value)) + geom_line(aes(color = type)) + facet_grid(~ run_name) +
+  ggtitle('Effects of Downstream Changes and Warming Ratio on Hector Results for Forcing from CO2',)+
+  theme(legend.position="bottom",
+      axis.text.x = element_text(angle = 45, vjust = 1.0, hjust = 1.0),
+      legend.title=element_blank(),
+      plot.title = element_text(hjust = 0.5))
+```
+
+```{r Ftot Hector Change Graph}
+ggplot(filter(all_df, variable == 'Ftot'), aes(x=year, y=value)) + geom_line(aes(color = type)) + facet_grid(~ run_name) +
+  ggtitle('Effects of Downstream Changes and Warming Ratio on Hector Results for Total Forcing',)+
+  theme(legend.position="bottom",
+      axis.text.x = element_text(angle = 45, vjust = 1.0, hjust = 1.0),
+      legend.title=element_blank(),
+      plot.title = element_text(hjust = 0.5))
+```
+
+```{r Hector emergent ratio, echo=FALSE}
+emergent_lo_warming_ratio <- function(core, scenario){
+  reset(core)
+  #setvar(core, NA, LO_WARMING_RATIO(), 1, getunits(LO_WARMING_RATIO()))
+  #fetchvars(core, NA, LO_WARMING_RATIO())
+  run(core)
+  Tland1 <- fetchvars(core, 1850:2300, LAND_AIR_TEMP())
+  Tocean1 <- fetchvars(core, 1850:2300, OCEAN_AIR_TEMP())
+  print(Tland$value/Tocean$value)
+  warming_ratio <- data.frame(Year = Tland$year, Ratio = Tland$value/Tocean$value, Scenario = scenario)
+  
+  warming_ratio
+}
+
+rcp26 <- system.file("input", "hector_rcp26.ini", package = "hector")
+rcp45 <- system.file("input", "hector_rcp45.ini", package = "hector")
+rcp60 <- system.file("input", "hector_rcp60.ini", package = "hector")
+rcp85 <- system.file("input", "hector_rcp85.ini", package = "hector")
+
+core26 <-  newcore(rcp26, suppresslogging = TRUE)
+core45 <- newcore(rcp45, suppresslogging = TRUE)
+core60 <- newcore(rcp60, suppresslogging = TRUE)
+core85 <- newcore(rcp85, suppresslogging = TRUE)
+
+ratio26 <- emergent_lo_warming_ratio(core26, 'rcp26')
+ratio45 <- emergent_lo_warming_ratio(core45, 'rcp45')
+ratio60 <- emergent_lo_warming_ratio(core60, 'rcp60')
+ratio85 <- emergent_lo_warming_ratio(core85, 'rcp85')
+
+all_ratios <- data.frame(Year = integer(), Ratio = double(), Scenario = character())
+all_ratios <- bindDataFrames(all_ratios, list(ratio26, ratio45, ratio60, ratio85))
+all_ratios_clean <- all_ratios[all_ratios$Ratio > 1 & all_ratios$Ratio < 2.5, ]
+ggplot(all_ratios) + aes(x = Year, y = Ratio) + geom_line(aes(color = Scenario))
+ggplot(all_ratios_clean) + aes(x = Year, y = Ratio) + geom_line(aes(color = Scenario))
+
+median(all_ratios_clean$Ratio)
+median(filter(all_ratios_clean, Scenario == 'rcp26')$Ratio)
+median(filter(all_ratios_clean, Scenario == 'rcp45')$Ratio)
+median(filter(all_ratios_clean, Scenario == 'rcp60')$Ratio)
+median(filter(all_ratios_clean, Scenario == 'rcp85')$Ratio)
+
+```
+
+
+```{r lo_warming range setup, echo = FALSE}
+path_name = '/Users/skylargering/land-ocean-warming-ratio'
+ratio_file_name = 'ratio_cleaned_1pctCO2_temp.csv'
+numRuns = 30
+
+run_with_param <- function(core, parameter, value) {
+    old_value <- fetchvars(core, NA, parameter)
+    unit <- as.character(old_value[["units"]])
+    reset(core)
+    setvar(core, NA, parameter, value, unit)
+    run(core)
+    result <- fetchvars(core, 1850:2300)
+    result[["parameter_value"]] <- value
+    result
+}
+
+#' Run Hector with a range of parameter values
+run_with_param_range <- function(core, parameter, values) {
+    mapped <- Map(function(x) run_with_param(core, parameter, x), values)
+    Reduce(rbind, mapped)
+}
+
+### MAIN ###
+
+ratio_data <- read.csv(file = file.path(path_name, ratio_file_name), stringsAsFactors = FALSE)
+mean <- mean(ratio_data$Ratio)
+sd <- sd(ratio_data$Ratio)
+ran_dist <- c(rnorm(numRuns, mean, sd), 1.0)
+
+range_lo_warming_ratio_26 <- run_with_param_range(core26, LO_WARMING_RATIO(), ran_dist)
+range_lo_warming_ratio_45 <- run_with_param_range(core45, LO_WARMING_RATIO(), ran_dist)
+range_lo_warming_ratio_60 <- run_with_param_range(core60, LO_WARMING_RATIO(), ran_dist)
+range_lo_warming_ratio_85 <- run_with_param_range(core85, LO_WARMING_RATIO(), ran_dist)
+```
+
+```{r warming ratio range rcp26, echo=FALSE}
+ggplot(range_lo_warming_ratio_26) +
+    aes(x = year, y = value, color = parameter_value, group = parameter_value) +
+    geom_line() + ggtitle("Parameter Range for Normal Distribution of Warming Ratio", subtitle = "Warming Scenario RCP 2.6") +
+    facet_wrap(~variable, scales = "free_y") +
+    guides(color = guide_colorbar(title = expression("Land-Ocean Warming Ratio"))) +
+    scale_color_viridis_c() +
+    theme(plot.title = element_text(hjust = 0.5),
+        plot.subtitle = element_text(hjust = 0.5))
+```
+
+```{r warming ratio range rcp45, echo=FALSE}
+ggplot(range_lo_warming_ratio_45) +
+    aes(x = year, y = value, color = parameter_value, group = parameter_value) +
+    geom_line() + ggtitle("Parameter Range for Normal Distribution of Warming Ratio", subtitle = "Warming Scenario RCP 4.5") +
+    facet_wrap(~variable, scales = "free_y") +
+    guides(color = guide_colorbar(title = expression("Land-Ocean Warming Ratio"))) +
+    scale_color_viridis_c() +
+    theme(plot.title = element_text(hjust = 0.5),
+        plot.subtitle = element_text(hjust = 0.5))
+```
+
+
+```{r warming ratio range rcp60, echo=FALSE}
+ggplot(range_lo_warming_ratio_60) +
+    aes(x = year, y = value, color = parameter_value, group = parameter_value) +
+    geom_line() + ggtitle("Parameter Range for Normal Distribution of Warming Ratio", subtitle = "Warming Scenario RCP 6.0") +
+    facet_wrap(~variable, scales = "free_y") +
+    guides(color = guide_colorbar(title = expression("Land-Ocean Warming Ratio"))) +
+    scale_color_viridis_c() +
+    theme(plot.title = element_text(hjust = 0.5),
+        plot.subtitle = element_text(hjust = 0.5))
+```
+
+
+```{r warming ratio range rcp85, echo=FALSE}
+ggplot(range_lo_warming_ratio_85) +
+    aes(x = year, y = value, color = parameter_value, group = parameter_value) +
+    geom_line() + ggtitle("Parameter Range for Normal Distribution of Warming Ratio", subtitle = "Warming Scenario RCP 8.5") +
+    facet_wrap(~variable, scales = "free_y") +
+    guides(color = guide_colorbar(title = expression("Land-Ocean Warming Ratio"))) +
+    scale_color_viridis_c() +
+    theme(plot.title = element_text(hjust = 0.5),
+        plot.subtitle = element_text(hjust = 0.5))
+```
 
 ## Appendix A
 

@@ -28,9 +28,9 @@ run_with_param_range <- function(core, parameter, values) {
 ratio_data <- read.csv(file = file.path(path_name, ratio_file_name), stringsAsFactors = FALSE)
 mean <- mean(ratio_data$Ratio)
 sd <- sd(ratio_data$Ratio)
-ran_dist <- rnorm(numRuns, mean, sd)
+ran_dist <- c(rnorm(numRuns, mean, sd), 1.0)
 
-core <- newcore(rcp85, suppresslogging = TRUE)
+core <- newcore(rcp45, suppresslogging = TRUE)
 range_lo_warming_ratio <- run_with_param_range(core, LO_WARMING_RATIO(), ran_dist)
 
 ggplot(range_lo_warming_ratio) +
