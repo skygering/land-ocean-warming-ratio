@@ -4,5 +4,9 @@
 !1pctCO2_temp.csv
 !cleaned_1pctCO2_temp.csv
 !ratio_cleaned_1pctCO2_temp.csv
+!master_outputstream_*
 *.png
 *.html
+*.docx
+*.pdf
+*.Rmd
