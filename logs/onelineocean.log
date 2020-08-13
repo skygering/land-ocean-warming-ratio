@@ -1,0 +1,4 @@
+Tue Aug 11 14:42:19 2020:NOTICE:printLogHeader: hector version 2.5.0
+Tue Aug 11 14:42:19 2020:DEBUG:init: hello onelineocean
+Tue Aug 11 14:42:19 2020:DEBUG:setData: Setting ocean_c[-1]=38000
+Tue Aug 11 14:42:20 2020:DEBUG:shutDown: goodbye onelineocean
