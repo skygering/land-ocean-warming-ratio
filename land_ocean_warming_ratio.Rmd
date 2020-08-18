@@ -1,0 +1,305 @@
+---
+title: "Land-Ocean Warming: From Emergent Property to Simple Parameterization"
+author: "Skylar Gering"
+date: "August 2020"
+output:
+   pdf_document
+bibliography: 
+   bibliography.bibtex
+---
+\centering
+\raggedright
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, fig.width=9, fig.height=6)
+library(ggplot2)
+library(tidyr)
+library(dplyr)
+library(plyr)
+library(tidyverse)
+library(hector)
+
+theme_set(theme_minimal())
+```
+
+## Abstract 
+|   Climate models are used to predict the future state of the earth system and range in complexity from earth system models (ESMs) to simple climate models (SCMs). SCMs can be parameterized with emergent properties from ESMs in order to increase predictive accuracy and physical realism. One such property is the land-ocean warming ratio, the relationship of the warming of air over land to that of air over ocean. The SCM Hector (version 2.3.0) lacked a parameterization of this property, which introduced inaccuracies into its sub-model calculations. I used Coupled Model Intercomparison Project (CMIP6) data to calculate an emergent warming ratio 1.591 across 17 different ESMs and incorporated this value as a tunable parameter into Hector’s configuration files. The model uses this value to differentiate land and ocean warming from the global mean; changes were also made so that land, ocean, and global temperatures are used as appropriate, for example in calculating the temperature sensitivity of terrestrial respiration. These changes produce more realistic predictions of warming scenarios over land and sea and provide a robust basis for analyses of climate mitigation targets, the effects of permafrost thaw, and other couple natural-human processes in the Earth system.
+
+\newpage
+\tableofcontents
+\newpage
+
+
+## Background
+
+### Climate Modeling
+  
+|       Scientists use climate models to predict the future state of the earth system and its responses to climate forcings. Some of the most complex models are fully coupled earth system models (ESMs), which split the earth and its atmosphere into a large grid system and then use mechanistic equations to calculate the state of the land, ocean, and atmosphere within each grid cell. ESMs are used in the International Panel on Climate Change's Coupled Model Intercomparison Project, which compares the results of models from around the globe. All of their calculations make ESMs are very computationally expensive and they can take weeks or even months to run a century-long simulation [@hartin2015simple]. ESM outputs includes data such as estimated future warming and CO~2~ levels, and these data can reveal new details about the earth system in the form of patterns or constants with physical meanings. An example of one such emergent property deduced from ESMs is the equilibrium climate sensitivity, or the level of warming that can be expected with a doubling of CO~2~.
+
+|       Simple climate models (SCMs), on the other hand, only preform vital calculations and have a lower spatial and temporal resolution than ESMs, calculating values globally rather than within many individual grid cells. Due to their relative simplicity, SCMs execute almost instantaneously and thus can be run much more frequently than ESMs. However, emergent properties from ESMs must be incorporated into SCMs as constants to replace the complex calculations present in ESMs [@meinshausen2011emulating]. When paramaterized with values from ESMs, SCMs can be used to emulate these more complex models, allowing scientists to run a large range of emissions scenarios, and thus gain a greater understanding of potential futures. SCMs can also be used to investigate particular subsets of climate systems by varying these inputs over numerous runs in factor separation analysis. Since SCMs offer numerous research benefits for relatively little computational cost, it is vital to increase their physical realism as much possible without increasing computational complexity. 
+  
+|       The Joint Global Change Research Institute, a joint research facility between Pacific Northwest National Laboratory and University of Maryland, College Park, developed the simple climate carbon-cycle model Hector in the period between 2010-2015. Hector is an open-source, object-oriented model designed to be easy to expand and couple with more complex climate models such as GCAM, as well as acting as a stand-alone model that can produce reproducible data [@hartin2015simple]. Hector is composed of several distinct sub-models, including temperature, land and ocean, melded together with a coupler that transmits data between distinct components. Hector can be run for a variety or warming scenarios, which specify anthropogenic emissions and other forcing factors based on scenarios ranging from the low emissions scenario, RCP 2.6, to the high emissions scenario, RCP 8.5 [@moss2010next].
+
+
+
+### Land-Ocean Warming Ratio
+
+|       An important emergent factor from ESMs that Hector did not parameterize is the land-ocean warming ratio. Direct real-world observations and climate models both show that the air over the land warms faster than the air over the ocean in historical and future climate change scenarios. The ratio of warming over land to warming over ocean is called the land-ocean warming ratio. An initial explanation for this ratio was the large thermal inertia of the ocean in comparison to that of the land. However, it was proven that the ocean's large heat capacity was not the primary cause of the land-ocean warming ratio since it was still present in climate models with a slab ocean (i.e. the ocean was already in a state of thermal equilibrium), although it is a contributing factor [@joshi2008mechanisms].
+  
+|       Rather, the existence of the land-ocean warming ratio is driven by earth's surface energy budget. Much of the solar radiation that falls on the ocean causes evaporation rather than warming of the ocean or the air above it [@sejas2014feedback]. This latent heat flux is in direct contrast to the sensible heat flux that primarily occurs over the land. Due to the lack of moisture in the soil available for evaporation, shortwave radiation heats the land, and the heat is then released into the air above it. Additionally, the increased atmospheric CO~2~ in global warming scenarios leads to decreased stomatal conductance in plants, which further decreases evaporation over land [@dong2009understanding].
+  
+|       Further contributing to this feedback loop, the increased evaporation over the ocean causes a lower lifted condensation level (LCL) and thus an increase in cloud cover, which blocks incoming shortwave radiation [@sejas2014feedback]. Additionally, the difference in LCL over ocean versus land affects the lapse rate of air parcels over the land and ocean, which is theorized to further contribute to the occurrence of the warming ratio [@joshi2008mechanisms]. 
+  
+|       Understanding the land-ocean warming constant is important to accurately estimating future warming over both land and ocean. Integrating the land-ocean warming constant into climate models allows scientists to predict the future of the earth system and its components with more accuracy
+  
+  
+
+## Methods
+
+|       The purpose of this project was to take CMIP6 data, calculate the land-ocean warming ratio, and incorporate it as a new parameter in Hector. See Appendix A for information on code availability and functionality.
+
+### Land-Ocean Warming Ratio Calculations
+
+|       The first step of this project was to calculate a reasonable value for the land-ocean warming ratio As mentioned above, the CMIP6 data set was used for this analysis. Specifically, data from one-percent CO~2~ runs was selected; these runs represent an idealized climate change scenario with CO~2~ levels increasing from pre-industrial levels by 1% per year until they double and are then held constant. Since this type of experiment has consistently changing input forces, it provides very clean data focused CO~2~ forcing without other confounding factors such as aerosols. Since CO~2~ forcing is very well understood, the outputs are easily interpretable. Since the land-ocean-warming constant is an emergent property, it is important to have clear data so not to confound the calculations. 
+
+|       I only used data from ensemble 'r1i1p1f1' for this work. Different ensembles represent different starting conditions for each model run. Each ensemble has a specific realization index, initialization index, physics index, and forcing index. A choice of 1 for each of these indexes represents very standard setup and conditions for the run. Further limiting the available data, calculating the land-ocean warming constant requires temperature data as well as a land map made with grid cell area data and data representing the fractional component of each grid cell taken up by land. Using all of these criteria, I selected the the following 18 models to analyze: ACCESS-CM2, ACCESS-ESM1-5, BCC-ESM1, CanESM5, CESM2, CESM2-WACCM, E3SM-1-0, GFDL-CM4, INM-CM4-8, INM-CM5-0, IPSL-CM6A-LR, MIROC6, MPI-ESM1-2-LR, MRI-ESM2-0, NorCPM1, NorESM2-LM, NorESM2-MM, and SAM0-UNICON.
+
+|       Each of these models has temperature data, grid area data, and fractional area data as described above in netCDF files. The average annual global, land, and ocean temperatures were calculated using a script leveraging Climate Data Operator (CDO), a collection of command line operators specialized to work on climate data. The script was run on PNNL's supercomputer PIC. The script output a CSV file containing the temperatures organized by ensemble, model, data type (land, ocean, or global), and time step. 
+
+|       This output data was then cleaned with an R script on a local machine that removed data that was outside of the plausible temperature range or did not run for the minimum number of years needed, 150 years for this study, and then output a cleaned version of the CSV file. This was then used to determine the warming ratio over time.
+
+|       The R script developed to calculate the warming ratio averaged both the annual land and ocean air warming data sets over 5 discrete 30 year periods for each model. Then, using the average value from the first 30 year period as a baseline, the warming for each subsequent time period was calculated for both land and ocean. Finally, the corresponding land and ocean warming for each model and time step were compared to determine the warming ratio. This final data was also output in CSV format to the local machine and was used to calculate the median warming ratio for use in the rest of the project.
+
+### Hector C++ Code Modifications
+
+|       Within Hector's C++ code base not all model components used the most specific warming for the respective calculations. Thus, the fist step was to ensure that all of Hector's sub-models used the correct temperature value (i.e. global, land, or ocean air) for their calculations. These downstream changes were intended to increase the physical realism of the model. In this project, the land component was edited to use the temperature over land rather than global average temperature in its calculations, which affects heterotrophic (microbial) respiration. The ocean component of the model was similarly changed to use the air over the ocean temperature,  changing atmospheric-ocean flux. After making these downstream changes, the next step was to add a tunable parameter for land-ocean warming ratio in Hector and expose the parameter in the model's R interface.
+
+|       Within the temperature component, Hector uses DOECLIM calculations to estimate the sea surface temperature, land temperature, and global average temperature [@kriegler2005imprecise]. Before modifications, the land-ocean warming ratio was an emergent property from these calculations. After modifications, users have the option to use the DOECLIM global average temperature and the land-ocean warming ratio parameter to calculate new values for the the ocean air temperature and land temperature. The ocean air temperature can then be used to calculate the sea surface temperature. These three new values then overwrite the DOECLIM calculated parameters, giving a constant warming ratio throughout the run.
+
+|       The new values are calculated using a system of two equations:  $wr = \frac{lw}{ow}$ where the warming ratio represented as _wr_, land warming as _lw_, and ocean warming as _ow_ and the weighted average $gt = (lw*frac) + (ow*(1 - frac))$ where global average temperature is _gt_ and fractional area of the globe covered in land is _frac_.
+
+The fractional land area is a constant parameter within DOECLIM and we use the DOECLIM calculated global temperature, making it possible to calculate both land and ocean air warming. DOECLIM also has a constant parameter for the warming factor between sea surface temperature and ocean air temperature and this constant can be used to calculate sea surface temperature from the new ocean air warming value. 
+
+|       Note that these changes are backward-compatible: if a Hector user does not desire to input a land-ocean warming ratio for the model, then the exact same calculations as before this new implementation are used. However, if a user does with to input a warming ratio, that functionality now exists.
+
+|       After making these changes, the new land-ocean warming parameter was exposed within the R interface, meaning that it is now possible to set the land-ocean warming ratio using the Hector R package. This makes it easy to run Hector many times while varying the value of the land-ocean warming ratio to investigate the effects on the model. 
+
+\newpage
+## Results
+
+```{r loading_data, echo=FALSE, cache = FALSE}
+path_name = '../land-ocean-warming-ratio'
+temp_file_name = 'cleaned_1pctCO2_temp.csv'
+ratio_file_name = 'ratio_cleaned_1pctCO2_temp.csv'
+
+temp_data <- read.csv(file = file.path(path_name, temp_file_name),
+                      stringsAsFactors = FALSE)
+
+ratio_data <- read.csv(file = file.path(path_name, ratio_file_name), stringsAsFactors = FALSE)
+
+rcp26 <- system.file("input", "hector_rcp26.ini", package = "hector")
+rcp45 <- system.file("input", "hector_rcp45.ini", package = "hector")
+rcp60 <- system.file("input", "hector_rcp60.ini", package = "hector")
+rcp85 <- system.file("input", "hector_rcp85.ini", package = "hector")
+```
+
+|       When visualizing the land, ocean, and global temperature for the 17 CMIP6 models used in this analysis, we expect a larger increase in temperature over land than over ocean, according to the literature. Our expectations are confirmed as shown in Figure 1. From the graph below, it is clear that on average the land temperature is raising at a faster rate than the ocean temperature, resulting in a land-ocean warming constant greater than one. 
+
+```{r temperature, echo=FALSE, fig.cap= "Data from CMIP6 1% CO~2~ runs in ensemble r1i1f1p1 showing the absolute temperature for land, ocean, and global temperature over 150-year period. Note the greater temperature increase over land than over ocean which suggests a land-ocean warming ratio greater than one. " }
+ggplot(temp_data, aes(x=Time, y=Temp, group = Model)) + 
+  geom_line(aes(color = Model)) +
+  facet_grid(cols = vars(Data)) +
+  ggtitle("Annual Average Temperature from CMIP6 Data", subtitle = 
+            expression('1% CO'[2]*' Scenario and r1i1p1f1 Ensemble')) +
+  xlab("Time (years)") + ylab("Temperature (K)") +
+  theme(plot.title = element_text(hjust = 0.5),
+        plot.subtitle = element_text(hjust = 0.5))
+```
+
+|       Using the warming data extracted from the CMIP6 runs, the land-ocean warming ratio was calculated for each model as described in the methods section. As shown below in Figure 2, the ratio stays relatively constant or decreases slightly over time for all models, again agreeing with previous literature. I hypothesize that the ratio decreases slightly over time for some of the models due to the model state adjusting at it reaches equilibrium and differences between the system's short-term and long-term reactions. With reassurance that the CMIP6 models' warming ratios are largely consistent with expectations I moved forward in my analysis.
+
+```{r ratio_over_time, echo=FALSE, fig.cap = "Land-ocean warming ratio over 150 year time period for all CMIP6 models used. Most models show that the ratio is near constant over time which is supported by previous literature."}
+ggplot(ratio_data, aes(x=Year, y=Ratio))+ 
+  geom_smooth(method='lm', formula= y~x, se = FALSE, color = "black") +
+ geom_point(aes(color = Model)) +
+  ggtitle("Land-Ocean Warming Ratio over Time", subtitle = 
+            expression('1% CO'[2]*' Scenario and r1i1p1f1 Ensemble')) +
+  theme(plot.title = element_text(hjust = 0.5),
+        plot.subtitle = element_text(hjust = 0.5), legend.position="none") +
+  facet_wrap(vars(Model))
+```
+
+|       Breaking the land-ocean warming data into discrete time periods of 30 years over the 150 years of CMIP6 data shows that the land-ocean warming ratio decreases slightly over time on average (Figure 3). Since Hector is generally run from 2015 to 2100, a time period of 75 years, and I wanted to use an estimated value that most closely matches the environment that it will be emulating within Hector, I thus used the median of all of the 150 years of data as shown in Figure 4.
+
+```{r boxplot_time, echo=FALSE, fig.cap = "Land-Ocean warming ratio for all models seperated by time period. Note that the ratio decreases slightly over the 150-year timescale."}
+ggplot(ratio_data, aes(x=Year, y=Ratio, group = Year)) +
+  geom_boxplot() +
+  geom_jitter(aes(color = Model)) +
+  ggtitle("Land-Ocean Warming Ratio Values over Time", subtitle = 
+            expression('1% CO'[2]*' Scenario and r1i1p1f1 Ensemble')) +
+  theme(plot.title = element_text(hjust = 0.5),
+        plot.subtitle = element_text(hjust = 0.5), legend.position="none")
+```
+
+```{r all box plot, echo = FALSE, fig.cap="Box plot of all four data points per model as shown in Figure 3. This gives a median of 1.591, which will be used to parameterize Hector."}
+ggplot(ratio_data, aes(x="",y=Ratio)) +
+  geom_boxplot() +
+  geom_jitter(aes(color = Model)) +
+  ggtitle("Land-Ocean Warming Ratio Values", subtitle = 
+            expression('1% CO'[2]*' Scenario and r1i1p1f1 Ensemble')) +
+  theme(plot.title = element_text(hjust = 0.5),
+        plot.subtitle = element_text(hjust = 0.5), legend.position="none")
+
+```
+
+
+|       Using all four data points for each model, I determined that the mean is $1.589 \pm 0.102$ and the median is $1.591 \pm 0.763$. Since the median is a more robust metric to the extremes, I used the value 1.591 for parameterizing the land-ocean warming ratio within Hector. 
+
+```{r hector changes from master, echo = FALSE}
+start_year = 2000
+
+bindDataFrames <- function(final_df, frames_to_bind){
+  for(frame in frames_to_bind){
+    final_df <- rbind(final_df, frame)
+  }
+  final_df
+}
+
+RCPs <- list()
+RCPs[[1]] <- list('rcp26', rcp26)
+RCPs[[2]] <- list('rcp45', rcp45)
+RCPs[[3]] <- list('rcp60', rcp60)
+RCPs[[4]] <- list('rcp85', rcp85)
+
+all_df <- data.frame(year = integer(), run_name = character(),  type = character(), master = double(), emergent = double(), constrain = double(), val_unit = character())
+
+
+for(i in 1:length(RCPs)){
+  read.csv(file = file.path(path_name, paste0('master_outputstream_', RCPs[[i]][[1]], '.csv')), skip=1, stringsAsFactors = FALSE) %>% 
+    filter(spinup == 0 & year > start_year-1 & (variable == 'Ca' | variable == 'Tgav' | variable == 'FCO2' | variable == 'Ftot')) %>% 
+    subset(select = -c(component, spinup)) %>% dplyr::rename(master = value) %>%
+    unite(val_unit, c(variable, units), sep = ' ', remove = TRUE)-> master
+  
+  core <-  newcore(RCPs[[i]][[2]], suppresslogging = TRUE)
+  run(core)
+  fetchvars(core, start_year:2300) %>% cbind(data.frame(run_name = RCPs[[i]][[1]])) %>%
+    subset(select = -scenario) %>% dplyr::rename(emergent = value) %>%
+    unite(val_unit, c(variable, units), sep = ' ', remove = TRUE)-> downstream_emergent
+  
+  reset(core)
+  setvar(core, NA, LO_WARMING_RATIO(), 1.591, getunits(LO_WARMING_RATIO()))
+  run(core)
+  fetchvars(core, start_year:2300) %>% cbind(data.frame(run_name = RCPs[[i]][[1]])) %>% 
+    subset(select = -scenario) %>% dplyr::rename(constrain = value) %>%
+    unite(val_unit, c(variable, units), sep = ' ', remove = TRUE)-> downstream_constrained
+
+  rcp_df <- merge(master, downstream_emergent, by =c("year", "run_name", "val_unit"))
+  rcp_df <- merge(rcp_df, downstream_constrained, by =c("year", "run_name", "val_unit"))
+  all_df <- rbind(all_df, rcp_df)
+}
+
+
+downstream_df <- all_df
+downstream_df$value <- all_df$emergent - all_df$master
+downstream_df$key <- 'Emergent Ratio with Downstream Changes'
+constrain_df <- all_df
+constrain_df$value = all_df$constrain - all_df$master
+constrain_df$key <- 'Ratio = 1.591 with Downstream Changes'
+
+final_df <- rbind(downstream_df, constrain_df)
+```
+
+|       The changes to the code had substantial effects on model outputs such as average global temperature, ambient CO~2~, forcing caused by C0~2~, and total forcing as shown in Figure 5, which compares the effects on these variables by warming scenario. The orange lines show the absolute changes in Hector results from the original code due to replacing global average temperature with land temperature and ocean air temperatures in appropriate calculations. The blue line visualizes the effects of setting the land-ocean warming ratio to 1.591 in conjunction with the downstream changes. We see increases in all four values displayed below, especially in the high warming RCP 8.5 scenario.
+
+```{r All Hector Change Graph, echo = FALSE, fig.cap = "Relative changes due to changes made to model from original code (represented by the dashed line on the y-axis). The orange lines reprsent effects of downstream changes (i.e. using land temperature for soil respiration calculations) and the blue lines represent changes from both downstream changes and setting the warming ratio to 1.591 as determined from CMIP6 data."}
+ggplot(final_df) + geom_hline(yintercept = 0, linetype = 'dashed') +
+  geom_line(aes(x=year, y=value, color = key)) + facet_grid(val_unit ~ run_name, scales =  "free_y") +
+  ggtitle('Effects of Downstream Changes and Warming Ratio \n on Hector Results for 4 Warming Scenarios') +
+  theme(legend.position="bottom",
+      axis.text.x = element_text(angle = 45, vjust = 1.0, hjust = 1.0),
+      legend.title=element_blank(),
+      plot.title = element_text(hjust = 0.5))
+```
+
+```{r lo_warming range setup, echo = FALSE}
+path_name = '/Users/skylargering/land-ocean-warming-ratio'
+ratio_file_name = 'ratio_cleaned_1pctCO2_temp.csv'
+numRuns = 500
+
+run_with_param <- function(core, parameter, value) {
+    old_value <- fetchvars(core, NA, parameter)
+    unit <- as.character(old_value[["units"]])
+    reset(core)
+    setvar(core, NA, parameter, value, unit)
+    run(core)
+    result <- fetchvars(core, 1850:2300)
+    result <- rbind(result, fetchvars(core, 1850:2300, OCEAN_AIR_TEMP()))
+    result <- rbind(result, fetchvars(core, 1850:2300, LAND_AIR_TEMP()))
+    result[["parameter_value"]] <- value
+    result
+}
+
+#' Run Hector with a range of parameter values
+run_with_param_range <- function(core, parameter, values) {
+    mapped <- Map(function(x) run_with_param(core, parameter, x), values)
+    Reduce(rbind, mapped)
+}
+
+### MAIN ###
+
+ratio_data <- read.csv(file = file.path(path_name, ratio_file_name), stringsAsFactors = FALSE)
+mean <- mean(ratio_data$Ratio)
+sd <- sd(ratio_data$Ratio)
+ran_dist <- c(rnorm(numRuns, mean, sd), 1.0)
+
+core45 <- newcore(rcp45, suppresslogging = TRUE)
+
+range_lo_warming_ratio_45 <- run_with_param_range(core45, LO_WARMING_RATIO(), ran_dist)
+```
+
+|       After exposing the land-ocean warming ratio within R, Hector was run 500 times, setting the ratio to a random value frawn from a normal distribution centered on the mean of the CMIP6 warming ratio data. Figure 6 shows that the value of the land-ocean warming ratio can have large effects on the results of Hector for various parameters. While only the data for RCP 4.5 is presented as it had one of the larger spreads, all four warming scenarios had similar results. The large spread of the presented parameters highlights the importance of making the land-ocean warming ratio a tunable parameter within R so robust analysis of the effects of changing the land-ocean warming ratio can be conducted.
+
+```{r warming ratio range rcp45, echo=FALSE, fig.cap="A normal distribution of warming ratio values centered on the mean of the CMIP6 land-ocean warming ratio data 1.589 for warming scenario RCP 4.5."}
+ggplot(range_lo_warming_ratio_45) +
+    aes(x = year, y = value, color = parameter_value, group = parameter_value) +
+    geom_line() + ggtitle("Parameter Range for Normal Distribution of Warming Ratio", subtitle = "Warming Scenario RCP 4.5") +
+    facet_wrap(~variable, scales = "free_y") +
+    guides(color = guide_colorbar(title = expression("Land-Ocean Warming Ratio"))) +
+    scale_color_viridis_c() +
+    theme(plot.title = element_text(hjust = 0.5),
+        plot.subtitle = element_text(hjust = 0.5))
+```
+
+\newpage
+## Discussion
+|       This project increased the physical realism of Hector predictions and opened an avenue for emulating ESMs using the land-ocean warming ratio. The downstream changes increased the predictive abilities of both global, land and ocean warming, which has the potential to affect climate resiliency planning. Additionally, understanding land warming can be especially important as it can have socioeconomic consequences relating to agriculture, infrastructure and the water and energy sectors. Hector's ability to emulate ESMs using the land-ocean warming ratio is important due to the computational complexity of ESMs and Hector's relative simplicity and fast run-time. Finally, making this change accessible though R broadens the reach of these benefits as Hector is an open-source climate model available to scientists around the world. 
+
+|       In the future, the temperature component of Hector needs to be more thoroughly examined. After overwriting the land and ocean air warming with values produced by the land-ocean warming ratio calculations, I discovered that feeding these values back into the calculation of global temperature created illogical data where increasing the land-ocean warming ratio caused a decrease in global temperature. I believe there is an unidentified bug in the code and fixing that would cause the effects of my changes to be larger. While the new values calculated currently feed into the land and ocean components of the model and thus change the carbon cycle, they do not otherwise affect the calculation of the global average temperature. Looking into this should be a top priority moving forward. 
+
+
+## Acknowledgments
+|       I would like to thank my mentors Dr. Ben Bond-Lamberty, Kalyn Dorheim, and Stephanie Pennington for their encouragement and dedication throughout this summer. I truly could not have done it without all three of you. Your guidance was priceless. I would also like to thank Pacific Northwest National Laboratory (PNNL) and the Joint Global Change Research Institute (JGCRI) for hosting me. A special thank you to the PNNL Office of STEM Education team for making this SULI interactive despite the challenge of working remotley.
+
+|       This work was supported in part by the U.S. Department of Energy, Office of Science, Office of Workforce Development for Teachers and Scientists (WDTS) under the Science Undergraduate Laboratory Internships Program (SULI). 
+
+\newpage
+## Appendix A
+
+|       All of the code and data outputs referenced in this paper can be found in the GitHub repository land-ocean-warming-ratio at <https://github.com/skygering/land-ocean-warming-ratio> and the Hector code can be found at <https://github.com/JGCRI/hector>.
+
+|       `avg_temp_script.R` and `average_temp_cdo.R` can be used calculate the annual average land, ocean, and global temperatures from CMIP6 data. In order to analyze the data using these scripts, a model must have `tas`, `areacalla`, and `sftlf` data.  `avg_temp_script.R` identifies usable models depending on the parameters input and given proper data organization and then `average_temp_cdo.R` will use CDO commands to analyze the data. These two scripts can be run using `sbatch avg_temp_job.txt` on PNNL's super computer PIC. The `cdo_path` variable at the top of `avg_temp_script.R` will need to be adapted to the local machine, as well as the code to identify the file placement of the temperature and area data as these are specific to the file system and organization of PIC. The `path_name` variable should be set to the top level of the project.
+
+|       The above files will output a CSV file with the average annual land, ocean, and global temperature for each model, as well as a folder for each model that will hold a CSV of the model's data as well as intermediate files if the `cleanup` variable is set to false.
+
+|       The data can then be run through `cleaning_temp_data.R` (again need to change global variables to fit your local machine and data) to get an updated CSV file with the cleaned data. This data can now be used for further investigations.
+
+|       The cleaned data can then be run through the script `warming_ratio.R`, which will output a CSV file containing the warming ratio for each model. Once the above data has been created (all three of the CSV file outputs mentioned above are also saved in this repository), the .Rmd file can be run to analyze the data and the create graphs of major trends. 
+
+|       The .Rmd file will require use of the Hector Package. If my work has been merged to the Hector master branch, this will simply be the normal Hector package. If not, the package will need to be built using the code from the branch `land_ocean_warming_ratio` in the Hector repository.
+
+\newpage
+
+## Bibliography
+
+
